@@ -9,20 +9,66 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="@color/background"
     tools:context="com.example.evie.music_assistant.MainActivity">
 
 
-    <ImageButton
+    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/metronome"
-        android:layout_marginStart="31dp"
-        android:layout_marginTop="36dp"
-        android:minWidth="186dp"
-        android:minHeight="186dp"
-        android:scaleType="fitCenter"
-        android:id="@+id/imageButton5"
+        android:drawableLeft="@drawable/tuner"
+        android:gravity="left|center_vertical"
+        android:text="    TUNER"
+        android:textSize="50dp"
+        android:textColor="@color/text"
+        android:id="@+id/imageButton6"
         android:background="@drawable/abc_btn_borderless_material"
+        android:backgroundTint="@color/bright_foreground_inverse_material_light"
+        android:layout_marginTop="44dp"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignStart="@+id/imageButton9" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@drawable/practice"
+        android:gravity="left|center_vertical"
+        android:text="    PRACTICE"
+        android:textSize="50dp"
+        android:textColor="@color/text"
+        android:id="@+id/imageButton9"
+        android:background="@drawable/abc_btn_borderless_material"
+        android:layout_below="@+id/imageButton6"
+        android:layout_alignStart="@+id/imageButton10"
+        android:layout_marginTop="21dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@drawable/metro"
+
+        android:gravity="left|center_vertical"
+        android:text="    METRONOME"
+        android:textSize="50dp"
+        android:textColor="@color/text"
+        android:id="@+id/imageButton11"
+        android:background="@drawable/abc_btn_borderless_material"
+        android:layout_marginTop="23dp"
+        android:layout_below="@+id/imageButton10"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@drawable/record"
+        android:gravity="left|center_vertical"
+        android:text="    RECORD"
+        android:textSize="50dp"
+        android:textColor="@color/text"
+        android:id="@+id/imageButton10"
+        android:background="@drawable/abc_btn_borderless_material"
+        android:layout_marginTop="21dp"
+        android:layout_below="@+id/imageButton9"
+        android:layout_alignStart="@+id/imageButton11" />
+
 </RelativeLayout>

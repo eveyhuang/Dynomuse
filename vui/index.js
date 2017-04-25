@@ -377,7 +377,7 @@ function handleRecordingRequest(intent, session, callback) {
 		
 		var audio = recordings[recording.toLowerCase()];
 		
-		if audio {
+		if (audio) {
 			//play that audio!
             // For now we will use SSML, but in the final iteration it will use S3
             speechOutput = {

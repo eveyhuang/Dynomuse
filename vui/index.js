@@ -288,7 +288,7 @@ function handleTuningDialogRequest(intent, session, callback) {
 		var note = session.attributes.utteredNote.value;
         url = tuner_url_dict[note];
         str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
-                + "<audio src=" + url + "> <break time='1s'/> <audio src=" + url + "> </speak>";
+                + "<audio src=\"" + url + "\"> <break time='1s'/> <audio src=\"" + url + "\"> </speak>";
         outputSpeech: {
             "type": "SSML",
             "ssml": str

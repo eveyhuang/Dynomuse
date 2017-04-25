@@ -111,12 +111,8 @@ function onIntent(intentRequest, session, callback) {
         handleRecordingRequest(intent, session, callback);
 	} else if (session.attributes && session.attributes.isMetronome) {
         handleMetronomeRequest(intent, session, callback);
-    
-	/*
-	} else if ("SelectKnownDessertRecipeIntent" === intentName || "SelectKnownFoodRecipeIntent" === intentName) {
-        handleMainMenuRequest(intent, session, callback);
-    */
-	
+    } else if ("SelectTaskIntent" === intentName) {
+		handleMainMenuRequest(intent, session, callback)
 	} else if ("AMAZON.StopIntent" === intentName) { // quit if at main menu (implied from not being in any current dialog)
         handleFinishSessionRequest(intent, session, callback);
     } else {
@@ -177,7 +173,7 @@ function handleMainMenuRequest(intent, session, callback) {
     }
 	*/
 
-    var recording = recordings_dict[item.toLowerCase()]; //an audio file or url to hosted audio file? I don't even know if this is comparable...
+    var recording = recordings_dict[item.toLowerCase()]; //recording
 
     if (recording) {
         JSON.stringify(recording);
@@ -224,14 +220,11 @@ function handleTuningDialogRequest(intent, session, callback) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
         
-		/*
-		delete session.attributes.isRecipeDialog;
-        delete session.attributes.recipe;
-        delete session.attributes.ingredients;
-        delete session.attributes.directions;
-        delete session.attributes.index;
-        delete session.attributes.isIngredientsList;
 		
+		delete session.attributes.isMetronome;
+		delete session.attributes.isTuning;
+		delete session.attributes.isRecording;
+		/*
 		DELETE SESSION ATTRIBUTES
 		*/
 		
@@ -241,14 +234,12 @@ function handleTuningDialogRequest(intent, session, callback) {
         // Jump right into that particular note
         speechOutput += "Okay, here's  " + note + ". You will hear it twice.";
             
-			/*
-			delete session.attributes.isRecipeDialog;
-            delete session.attributes.isIngredientsList;
-            delete session.attributes.ingredients;
-            session.attributes.index = -1;
-            session.attributes.isRecipeDirectionsDialog = true;
-            session.attributes.isRecipeList = true;
 			
+			delete session.attributes.isMetronome;
+            delete session.attributes.isRecording;
+            session.attributes.isTuning = true;
+            
+			/*
 			DELETE/SET ATTRIBUTES */
 			
 			//play some notes

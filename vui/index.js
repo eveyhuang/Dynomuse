@@ -156,11 +156,11 @@ function onSessionEnded(sessionEndedRequest, session) {
 
 // ------- Skill specific business logic -------
 
-var CARD_TITLE = "Music Assistant";
+var CARD_TITLE = "Dyno Muse";
 
 function getWelcomeResponse(callback) {
     var sessionAttributes = {},
-        speechOutput = "Music Assistant, what recipe would you like to make?",
+        speechOutput = "Dyno Muse, what you would you like to do?",
         shouldEndSession = false,
         repromptText = "What else can I help you with?";
 

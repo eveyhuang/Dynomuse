@@ -23,6 +23,11 @@ SelectSigIntent {utteredSig} time
 SelectRecIntent find {utteredRec}
 SelectRecIntent find {utteredRec} recording
 SelectRecIntent do you have {utteredRec}
+SelectRecIntent listen
+
+GetRecordingListIntent go through list
+GetRecordingListIntent recordings
+GetRecordingListIntent list
 
 AMAZON.HelpIntent what can I say
 AMAZON.HelpIntent what can I do

@@ -1,0 +1,17 @@
+A flat
+A
+A sharp
+B flat
+B
+C
+C sharp
+D flat
+D
+D sharp
+E flat
+E
+F
+F sharp
+G flat
+G
+G sharp

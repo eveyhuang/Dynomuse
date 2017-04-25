@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void goToRecord(View view) {
-        Intent recordIntent = new Intent(this, Metronome.class);
+        Intent recordIntent = new Intent(this, Record.class);
         startActivity(recordIntent);
     }
 }

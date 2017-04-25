@@ -267,7 +267,7 @@ function handleTuningDialogRequest(intent, session, callback) {
 	// - Start with standard guitar tuning EADGBE -- actually nixing this would be easier
 	// - Manually choose each note they would like to tune to
 	
-	var speechOutput = ""
+	var speechOutput = {}
 
     if ("AMAZON.StopIntent" === intent.name) {
         // Back out into the main menu
@@ -289,19 +289,19 @@ function handleTuningDialogRequest(intent, session, callback) {
         url = tuner_url_dict[note];
         str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
                 + "<audio src=\"" + url + "\"> <break time='1s'/> <audio src=\"" + url + "\"> </speak>";
-        outputSpeech: {
+        speechOutput = {
             "type": "SSML",
             "ssml": str
         }
 			//add notes into speechOutput with SSML
-			
+
     } else { //might not necessarily have to be reprompt
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 	}
-	
+
 
     callback(session.attributes,
         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
@@ -336,23 +336,23 @@ function handleTuningDialogRequest(intent, session, callback) {
             }
         }
 		*/
-		
+
 		//^^^ Helpful for going through a list, not really applicable here
-		
-		
+
+
 
 function handleRecordingRequest(intent, session, callback) {
     // Handles all intents in the Recording Dialog
-    // User can: 
+    // User can:
     // - Back out to main menu
     // - Look for a specific recording title
 	// - Go through the list of recordings one by one, calls handleRecordingListRequest
     //   * If the user goes forward at the end, let them know there is no more recordings.
     //   * If the user goes backwards at the beginning, just repeat the first recording's title.
 	// - Play a recording once found
-	
+
 	var speechOutput = ""
-	
+
 	if ("AMAZON.StopIntent" === intent.name) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
@@ -370,10 +370,10 @@ function handleRecordingRequest(intent, session, callback) {
 	} else if ("SelectRecIntent" === intent.name && session.attributes.utteredRec) {
 		//try to find selected song in table of recordings pulled from earlier
 		var recording = session.attributes.utteredRec.value;
-		
+
 		var audio = recordings[recording.toLowerCase()];
-		
-		if audio {
+
+		if (audio) {
 			//play that audio!
 		}
 		else {

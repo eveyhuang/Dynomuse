@@ -12,8 +12,6 @@ SelectSpeedIntent play at {utteredSpeed} b p m
 SelectSpeedIntent play at {utteredSpeed} beats per minute
 SelectSpeedIntent {utteredSpeed} b p m
 SelectSpeedIntent {utteredSpeed} beats per minute
-SelectSpeedIntent faster
-SelectSpeedIntent slower
 
 SelectSigIntent play in {utteredSig} time
 SelectSigIntent play in {utteredSig} time
@@ -21,7 +19,7 @@ SelectSigIntent {utteredSig} time
 SelectSigIntent {utteredSig} time
 
 SelectRecIntent find {utteredRec}
-SelectRecIntent find {utteredRec} recording
+SelectRecIntent find the file {utteredRec}
 SelectRecIntent do you have {utteredRec}
 SelectRecIntent listen
 

@@ -1,0 +1,70 @@
+{
+  "intents": [
+    {
+      "intent": "SelectTaskIntent",
+      "slots": [
+        {
+          "name": "utteredTask",
+          "type": "LIST_OF_TASKS"
+        }
+      ]
+    },
+    {
+      "intent": "SelectNoteIntent",
+      "slots": [
+        {
+          "name": "utteredNote",
+          "type": "LIST_OF_NOTES"
+        }
+      ]
+    },
+    {
+      "intent": "SelectSigIntent",
+      "slots": [
+        {
+          "name": "utteredSig",
+          "type": "LIST_OF_SIGS"
+        }
+      ]
+    },
+    {
+      "intent": "SelectRecIntent",
+      "slots": [
+        {
+          "name": "utteredRec",
+          "type": "AMAZON.Food"
+        }
+      ]
+    },
+    {
+      "intent": "SelectSpeedIntent",
+      "slots": [
+        {
+          "name": "utteredSpeed",
+          "type": "AMAZON.NUMBER"
+        }
+      ]
+    },
+    {
+      "intent": "AMAZON.StartOverIntent"
+    },
+    {
+      "intent": "AMAZON.NextIntent"
+    },
+    {
+      "intent": "AMAZON.PreviousIntent"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "AMAZON.PauseIntent"
+    },
+    {
+      "intent": "AMAZON.ResumeIntent"
+    }
+  ]
+}

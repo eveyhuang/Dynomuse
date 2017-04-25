@@ -23,7 +23,7 @@ exports.handler = function (event, context) {
 		
         var params = {
             TableName: "Recordings"
-        };
+		};
 
         // adapted code from piazza post
         dynamo.scan(params, function(err, data) {
@@ -109,6 +109,8 @@ function onIntent(intentRequest, session, callback) {
         handleTuningDialogRequest(intent, session, callback);
     } else if (session.attributes && session.attributes.isRecording) {
         handleRecordingRequest(intent, session, callback);
+	} else if (session.attributes && session.attributes.isRecordingList) {
+        handleRecordingListRequest(intent, session, callback);	
 	} else if (session.attributes && session.attributes.isMetronome) {
         handleMetronomeRequest(intent, session, callback);
     } else if ("SelectTaskIntent" === intentName) {
@@ -172,7 +174,35 @@ function handleMainMenuRequest(intent, session, callback) {
         var item = intent.slots.FoodRecipe.value;
     }
 	*/
+	
+	if ("SelectTaskIntent" === intent.name) {
+		//3 tasks possible
+		var task = intent.slots.utteredTask.value;
+		if (task === "tuner") {
+			session.attributes.isTuning = true;
+			session.attributes.isRecording = false;
+			session.attributes.isMetronome = false;
+			handleTuningDialogRequest(intent, session, callback);
+		} else if (task === "metronome") {
+			session.attributes.isTuning = false;
+			session.attributes.isRecording = false;
+			session.attributes.isMetronome = true;
+			handleMetronomeRequest(intent, session, callback);
+		} else if (task === "record" || task === "recording") {
+			session.attributes.isTuning = false;
+			session.attributes.isRecording = true;
+			session.attributes.isMetronome = false;
+			handleRecordingRequest(intent, session, callback);
+		}
+	}
+	else {
+		var reprompt = session.attributes.repromptText,
+            speechOutput = "Oops I don't think you're supposed to be here, what task would you like help with?" + reprompt;
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+	}
 
+	/* HELPFUL JSON PARSING + LOGIC FOR RECORD
     var recording = recordings_dict[item.toLowerCase()]; //recording
 
     if (recording) {
@@ -205,6 +235,8 @@ function handleMainMenuRequest(intent, session, callback) {
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
     }
+	
+	*/
 }
 
 function handleTuningDialogRequest(intent, session, callback) {
@@ -224,30 +256,30 @@ function handleTuningDialogRequest(intent, session, callback) {
 		delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
-		/*
-		DELETE SESSION ATTRIBUTES
-		*/
+		delete session.attributes.utteredTask;
+		delete session.attributes.utteredNote;
+		delete session.attributes.utteredSpeed;
+		delete session.attributes.utteredRec;
 		
-	//var note = ??
 	
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
+		var note = session.attributes.utteredNote.value;
         speechOutput += "Okay, here's  " + note + ". You will hear it twice.";
             
+			//add notes into speechOutput with SSML
 			
-			delete session.attributes.isMetronome;
-            delete session.attributes.isRecording;
-            session.attributes.isTuning = true;
-            
-			/*
-			DELETE/SET ATTRIBUTES */
-			
-			//play some notes
-			
-    } else {
-        var index = session.attributes.index; //might be helpful for going through recording list? but probably not here
-        
-		
+    } else { //might not necessarily have to be reprompt
+        var reprompt = session.attributes.repromptText,
+            speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+	}
+	
+
+    callback(session.attributes,
+        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+}
 		/*// Check if user has just stated they wanted to go through ingredients
         if ("GetIngredientsIntent" === intent.name && !session.attributes.isIngredientsList) {
             speechOutput += "I'll go through the ingredients list. "
@@ -281,56 +313,111 @@ function handleTuningDialogRequest(intent, session, callback) {
 		
 		//^^^ Helpful for going through a list, not really applicable here
 		
-	}
 		
-    
 
-    callback(session.attributes,
-        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
-}
-/*
-function handleRecipeDirectionsRequest(intent, session, callback) {
-    // Handles all intents in the Recipe Directions Dialog.
+function handleRecordingRequest(intent, session, callback) {
+    // Handles all intents in the Recording Dialog
     // User can: 
-    // - Back out into the ingredients dialog
-    // - Have Alexa start reading recipe steps by user response
-    //   * If the user goes forward at the end, let them know there is no more steps.
-    //   * If the user goes backwards at the beginning, just repeat the first step.
+    // - Back out to main menu
+    // - Look for a specific recording title
+	// - Go through the list of recordings one by one, calls handleRecordingListRequest
+    //   * If the user goes forward at the end, let them know there is no more recordings.
+    //   * If the user goes backwards at the beginning, just repeat the first recording's title.
+	// - Play a recording once found
+	
+	var speechOutput = ""
+	
+	if ("AMAZON.StopIntent" === intent.name) {
+        // Back out into the main menu
+        speechOutput += session.attributes.speechOutput;
+        delete session.attributes.isMetronome;
+		delete session.attributes.isTuning;
+		delete session.attributes.isRecording;
+		delete	sessions.attributes.isRecordingList;
+		delete sessions.attributes.index;
+		delete session.attributes.utteredTask;
+		delete session.attributes.utteredNote;
+		delete session.attributes.utteredSpeed;
+		delete session.attributes.utteredRec;
+    } else if ("GetRecordingListIntent" === intent.name) {
+		sessions.attributes.isRecordingList = true;
+	} else if ("SelectRecIntent" === intent.name && session.attributes.utteredRec) {
+		//try to find selected song in table of recordings pulled from earlier
+		var recording = session.attributes.utteredRec.value;
+		
+		var audio = recordings[recording.toLowerCase()];
+		
+		if audio {
+			//play that audio!
+		}
+		else {
+			var reprompt = session.attributes.repromptText;
+            speechOutput = "I do not believe I have a recording called " + recording + ". " + reprompt;
+			callback(session.attributes,
+				buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+		}
+	}
+	//add to speech output ^^^
+	callback(session.attributes,
+				buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+	}
 
+/*		
+function handleRecordingListeningRequest(intent, session, callback) {
+	//Handles the actual playing of a particular recording
+	
+}		
+*/
+	
+function handleRecordingListRequest(intent, session, callback) {
+    // Handles walking through the list of recordings
+    // User can: 
+	// - Go through the list of recordings one by one, calls handleRecordingListRequest
+    //   * If the user goes forward at the end, let them know there is no more recordings.
+    //   * If the user goes backwards at the beginning, just repeat the first recording's title.
+	// - Play a recording once found
 
     var speechOutput = ""
 
     if ("AMAZON.StopIntent" === intent.name) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
-        delete session.attributes.isRecipeDirectionsDialog;
-        delete session.attributes.recipe;
-        delete session.attributes.ingredients;
-        delete session.attributes.directions;
-        delete session.attributes.index;
-        delete session.attributes.isRecipeList;
-    } else {
-        // Check if user has just stated they wanted to go through the recipe
-        if ("GetRecipeDirectionsIntent" === intent.name && !session.attributes.isRecipeList) {
-            speechOutput += "I'll go through the recipe's directions for " + session.attributes.recipe + ". "
-                + "Please say next to go through the directions or say 'what can I do?' for further assistance. "
-            session.attributes.isRecipeList = true;
+        delete session.attributes.isMetronome;
+		delete session.attributes.isTuning;
+		delete session.attributes.isRecording;
+		delete session.attributes.utteredTask;
+		delete session.attributes.utteredNote;
+		delete session.attributes.utteredSpeed;
+		delete session.attributes.utteredRec;
+		delete session.attributes.index;
+	} else {
+        if ("GetRecordingListIntent" === intent.name && !session.attributes.isRecordingList) {
+            speechOutput += "I'll go through your recordings, for each file you can decide if you want to listen to it or go to the next file."
+            session.attributes.isRecordingList = true;
         } else {
             // Progress through the list based on response
             var sample = -1;
-            if ("GetRecipeDirectionsIntent" === intent.name) { // if they say get recipe intent, treat like "next" intent
-                sample = getIndex("AMAZON.NextIntent", session.attributes.index, session.attributes.directions.length);
-            } else {
-                sample = getIndex(intent.name, session.attributes.index, session.attributes.directions.length);
+            if ("GetRecordingListIntent" === intent.name) { // if they say get recording intent, treat like "next" intent
+                sample = getIndex("AMAZON.NextIntent", session.attributes.index, session.attributes.recordings.length);
+            } else if ("SelectRecIntent" === intent.name) {
+				if (session.attributes.utteredRec) {
+					//play the recording they said to
+				}
+				else {
+					//play the recording we are at right now in the list
+					var recording = recordings[] 
+				}
+			} else {
+                sample = getIndex(intent.name, session.attributes.index, session.attributes.recordings.length); 
             }
-            var index = session.attributes.index;
-            if (sample < session.attributes.directions.length) {
+            var index = session.attributes.index; //will have to add this as an attribute everywhere
+            if (sample < session.attributes.recordings.length) {
                 speechOutput += session.attributes.directions[sample];
                 session.attributes.index = sample;
             } else {
-                speechOutput += "This is the end of the recipe. "
-                    + "You can go back to the recipe by saying 'start over'. "
-                    + "If you are done, please say quit. ";
+                speechOutput += "You have no more recording files "
+                    + "You can go back to the beginning of the list by saying 'start over'. "
+                    + "If you are done, you may quit. ";
             }      
         }
     }
@@ -338,7 +425,9 @@ function handleRecipeDirectionsRequest(intent, session, callback) {
     callback(session.attributes,
         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
-*/
+
+//TO DO MetronomeHandler
+function handleMetronomeRequest(intent, session, callback) {}
 
 function handleGetHelpRequest(intent, session, callback) {
     // Provide a help prompt for the user, explaining possible responses.

@@ -3,4 +3,23 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/choose"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:gravity="left|center_vertical"
+        android:text="Choose a note:"
+        android:textSize="50dp"
+        android:textColor="@color/text"/>
+    <Spinner
+        android:id="@+id/notes_spinner"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="100dp"
+        android:layout_height="100dp" />
+    <Button
+        android:id="@+id/playbutton"
+        android:layout_gravity="center_horizontal"
+        android:drawableTop="@drawable/play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </LinearLayout>

@@ -8,6 +8,27 @@ const dynamo = new doc.DynamoDB();
 
 var recordings_dict = {};
 
+// Way to make it dry: get the base url and append the string associated + .mp3
+var tuner_url_dict = {
+    "A flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
+    "A": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/A4.mp3",
+    "A sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
+    "B flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
+    "B": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/B4.mp3",
+    "C": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
+    "C sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
+    "D flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Csharp4.mp3",
+    "D": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/D4.mp3",
+    "D sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
+    "E flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
+    "E": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/E4.mp3",
+    "F": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/F4.mp3",
+    "F sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
+    "G flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
+    "G": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/G4.mp3",
+    "G sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
+};
+
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
 // etc.) The JSON body of the request is provided in the event parameter.
 exports.handler = function (event, context) {
@@ -265,8 +286,13 @@ function handleTuningDialogRequest(intent, session, callback) {
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
 		var note = session.attributes.utteredNote.value;
-        speechOutput += "Okay, here's  " + note + ". You will hear it twice.";
-            
+        url = tuner_url_dict[note];
+        str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
+                + "<audio src=" + url + "> <break time='1s'/> <audio src=" + url + "> </speak>";
+        outputSpeech: {
+            "type": "SSML",
+            "ssml": str
+        }
 			//add notes into speechOutput with SSML
 			
     } else { //might not necessarily have to be reprompt

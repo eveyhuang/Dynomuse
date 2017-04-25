@@ -452,8 +452,40 @@ function handleRecordingListRequest(intent, session, callback) {
         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
 
-//TO DO MetronomeHandler
-function handleMetronomeRequest(intent, session, callback) {}
+function handleMetronomeRequest(intent, session, callback) {
+    /* Handles Metronome Task
+     * User can:
+     * - start metronome
+     * - stop metronome
+     * - change the tempo
+     * - change the time signature
+    */
+   var speechOutput = ""
+
+   if ("AMAZON.StopIntent" === intent.name) {
+        // Back out into the main menu
+        speechOutput += session.attributes.speechOutput;
+        delete session.attributes.isMetronome;
+      delete session.attributes.isTuning;
+      delete session.attributes.isRecording;
+      delete session.attributes.utteredTask;
+      delete session.attributes.utteredNote;
+      delete session.attributes.utteredSpeed;
+      delete session.attributes.utteredRec;
+      delete session.attributes.index;
+   } else if ("SelectSpeedIntent" === intent.name) {
+      var speed = session.attributes.utteredSpeed.value;
+   } else if ("SelectSigIntent" === intent.name) {
+      var sig = session.attributes.utteredSig.value;
+   } else if ("AMAZON.PauseIntent" === intent.name) {
+   } else if ("AMAZON.ResumeIntent" === intent.name) {
+   }
+
+   callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+
+
+}
 
 function handleGetHelpRequest(intent, session, callback) {
     // Provide a help prompt for the user, explaining possible responses.

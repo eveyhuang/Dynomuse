@@ -17,8 +17,8 @@ public class Tuner extends AppCompatActivity {
         setContentView(R.layout.tunerscreen);
         Spinner spinner = (Spinner) findViewById(R.id.notes_spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.notes_array, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                R.array.notes_array, R.layout.spinner_layout);
+        adapter.setDropDownViewResource(R.layout.spinner_layout);
         spinner.setAdapter(adapter);
     }
 

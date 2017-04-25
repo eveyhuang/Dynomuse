@@ -146,7 +146,6 @@
             android:layout_height="wrap_content"
             android:onClick="onStartStopClick"
             android:background="@drawable/play"
-            android:text="@string/start"
             android:textSize="80dp" />
 
     </LinearLayout>

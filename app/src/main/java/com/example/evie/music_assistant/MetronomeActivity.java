@@ -1,5 +1,6 @@
 package com.example.evie.music_assistant;
 
+import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.*;
@@ -51,6 +52,8 @@ public class MetronomeActivity extends AppCompatActivity {
     private TextView currentBeat;
 
     private Handler mHandler;
+
+    private boolean stop = true;
 
     // have in mind that: http://stackoverflow.com/questions/11407943/this-handler-class-should-be-static-or-leaks-might-occur-incominghandler
     // in this case we should be fine as no delayed messages are queued
@@ -122,18 +125,21 @@ public class MetronomeActivity extends AppCompatActivity {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public synchronized void onStartStopClick(View view) {
         Button button = (Button) view;
-        String buttonText = button.getText().toString();
-        if(buttonText.equalsIgnoreCase("start")) {
-            button.setText(R.string.stop);
+        Drawable bg = button.getBackground();
+        if(stop) {
+            button.setBackground(getDrawable(R.drawable.pause));
+            stop = !stop;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
                 metroTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (Void[])null);
             else
                 metroTask.execute();
         } else {
-            button.setText(R.string.start);
+            button.setBackground(getDrawable(R.drawable.play));
             metroTask.stop();
             metroTask = new MetronomeAsyncTask();
             Runtime.getRuntime().gc();
+            stop = !stop;
+
         }
     }
 

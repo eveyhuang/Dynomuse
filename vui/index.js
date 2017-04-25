@@ -6,7 +6,7 @@ const doc = require('dynamodb-doc');
 
 const dynamo = new doc.DynamoDB();
 
-var recordings_dict = {};
+var recordings = {};
 
 // Way to make it dry: get the base url and append the string associated + .mp3
 var tuner_url_dict = {
@@ -46,8 +46,10 @@ exports.handler = function (event, context) {
             TableName: "Recordings"
 		};
 
+
         // adapted code from piazza post
-        dynamo.scan(params, function(err, data) {
+        // This is where we would populate the dict with the file names and urls
+        /*dynamo.scan(params, function(err, data) {
             if (err) {
                 console.log("Failed to get data", err);
             }
@@ -56,7 +58,9 @@ exports.handler = function (event, context) {
                 const name = item['RecordingName'].toLowerCase();
                 recordings_dict[name] = item;
             }
-        });
+        });*/
+        recordings["piano"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/piano.mp3";
+        recordings["sax"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/sax.mp3";
 
         if (event.session.new) {
             onSessionStarted({requestId: event.request.requestId}, event.session);
@@ -267,7 +271,7 @@ function handleTuningDialogRequest(intent, session, callback) {
 	// - Start with standard guitar tuning EADGBE -- actually nixing this would be easier
 	// - Manually choose each note they would like to tune to
 	
-	var speechOutput = {}
+	var speechOutput = ""
 
     if ("AMAZON.StopIntent" === intent.name) {
         // Back out into the main menu
@@ -290,18 +294,18 @@ function handleTuningDialogRequest(intent, session, callback) {
         str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
                 + "<audio src=\"" + url + "\"> <break time='1s'/> <audio src=\"" + url + "\"> </speak>";
         speechOutput = {
-            "type": "SSML",
-            "ssml": str
+            type: "SSML",
+            ssml: str
         }
 			//add notes into speechOutput with SSML
-
+			
     } else { //might not necessarily have to be reprompt
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 	}
-
+	
 
     callback(session.attributes,
         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
@@ -336,23 +340,23 @@ function handleTuningDialogRequest(intent, session, callback) {
             }
         }
 		*/
-
+		
 		//^^^ Helpful for going through a list, not really applicable here
-
-
+		
+		
 
 function handleRecordingRequest(intent, session, callback) {
     // Handles all intents in the Recording Dialog
-    // User can:
+    // User can: 
     // - Back out to main menu
     // - Look for a specific recording title
 	// - Go through the list of recordings one by one, calls handleRecordingListRequest
     //   * If the user goes forward at the end, let them know there is no more recordings.
     //   * If the user goes backwards at the beginning, just repeat the first recording's title.
 	// - Play a recording once found
-
+	
 	var speechOutput = ""
-
+	
 	if ("AMAZON.StopIntent" === intent.name) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
@@ -370,11 +374,16 @@ function handleRecordingRequest(intent, session, callback) {
 	} else if ("SelectRecIntent" === intent.name && session.attributes.utteredRec) {
 		//try to find selected song in table of recordings pulled from earlier
 		var recording = session.attributes.utteredRec.value;
-
+		
 		var audio = recordings[recording.toLowerCase()];
-
-		if (audio) {
+		
+		if audio {
 			//play that audio!
+            // For now we will use SSML, but in the final iteration it will use S3
+            speechOutput = {
+                type: "SSML",
+                ssml: "<speak><audio src=\"" + audio + "\"></speak>"
+            };
 		}
 		else {
 			var reprompt = session.attributes.repromptText;
@@ -428,14 +437,20 @@ function handleRecordingListRequest(intent, session, callback) {
             } else if ("SelectRecIntent" === intent.name) {
 				if (session.attributes.utteredRec) {
 					//play the recording they said to
+                    var recording = recordings[session.attributes.utteredRec.value.toLowerCase()];
 				}
 				else {
 					//play the recording we are at right now in the list
-					var recording = recordings[] 
+					var recording = recordings[sample];
 				}
+                speechOutput = {
+                    type: "SSML",
+                    ssml: "<speak><audio src=\"" + recording + "\"></speak>"
+                };
 			} else {
                 sample = getIndex(intent.name, session.attributes.index, session.attributes.recordings.length); 
             }
+            // TO-DO: translate a bit of the old code to the new code
             var index = session.attributes.index; //will have to add this as an attribute everywhere
             if (sample < session.attributes.recordings.length) {
                 speechOutput += session.attributes.directions[sample];

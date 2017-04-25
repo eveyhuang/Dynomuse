@@ -4,10 +4,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.*;
 import android.content.*;
-import android.widget.*;
-
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,12 +19,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void goToMetronome(View view) {
-        Intent metroIntent = new Intent(this, Metronome.class);
+        Intent metroIntent = new Intent(this, MetronomeActivity.class);
         startActivity(metroIntent);
     }
 
     public void goToRecord(View view) {
-        Intent recordIntent = new Intent(this, Record.class);
+        Intent recordIntent = new Intent(this, MetronomeActivity.class);
         startActivity(recordIntent);
     }
 }

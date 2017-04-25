@@ -1,0 +1,37 @@
+SelectTaskIntent start {utteredTask}
+SelectTaskIntent I want to {utteredTask}
+SelectTaskIntent I'd like to {utteredTask}
+SelectTaskIntent launch {utteredTask}
+
+SelectNoteIntent play in the key of {utteredNote}
+SelectNoteIntent I want to play in the key of {utteredNote}
+SelectNoteIntent I want to play {utteredNote}
+SelectNoteIntent Tune to the key of {utteredNote}
+
+SelectSpeedIntent play at {utteredSpeed} b p m
+SelectSpeedIntent play at {utteredSpeed} beats per minute
+SelectSpeedIntent {utteredSpeed} b p m
+SelectSpeedIntent {utteredSpeed} beats per minute
+
+SelectSigIntent play in {utteredSig} time
+SelectSigIntent play in {utteredSig} time
+SelectSigIntent {utteredSig} time
+SelectSigIntent {utteredSig} time
+
+SelectRecIntent find {utteredRec}
+SelectRecIntent find the file {utteredRec}
+SelectRecIntent do you have {utteredRec}
+SelectRecIntent listen
+
+GetRecordingListIntent go through list
+GetRecordingListIntent recordings
+GetRecordingListIntent list
+
+AMAZON.HelpIntent what can I say
+AMAZON.HelpIntent what can I do
+
+AMAZON.StopIntent quit
+AMAZON.StopIntent leave
+AMAZON.StopIntent main menu
+
+AMAZON.StartOverIntent start again

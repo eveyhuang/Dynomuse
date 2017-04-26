@@ -335,7 +335,7 @@ function handleRecordingListRequest(intent, session, callback) {
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
 	} else {
-        if ("SelectTaskIntent" === intent.name && intent.slots.utteredTask.value === "tuner") {
+        if ("SelectTaskIntent" === intent.name && (intent.slots.utteredTask.value === "record" || intent.slots.utteredTask.value === "recording")) {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
             session.attributes.isRecordingList = true;
         } else {

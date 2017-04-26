@@ -29,9 +29,10 @@ var tuner_url_dict = {
     "G sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
 };
 
-var START_MODE = '';
-var PLAY_MODE = '_PLAY_MODE';
-var RESUME_DECISION_MODE = '_RESUME_DECISION_MODE';
+// hard coding the beats for now, not worrying about "up"
+var metronome_url_dict = {
+    
+}
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
 // etc.) The JSON body of the request is provided in the event parameter.
@@ -391,18 +392,24 @@ function handleMetronomeRequest(intent, session, callback) {
         delete session.attributes.isRecording;
     } else if ("SelectSpeedIntent" === intent.name) {
         var speed = intent.slots.utteredSpeed.value;
+        // for now the speed doesn't matter
+        speechOutput = "Tempo is set to " + speed + "BPM.";
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSigIntent" === intent.name) {
         var sig = intent.slots.utteredSig.value;
+        // for now time signature does not matter
+        speechOutput = "Time signature is now " + sig + ".";
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("AMAZON.PauseIntent" === intent.name) {
-        // do something
+        callback(session.attributes,
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
     } else {
-        speechOutput += "I do not support that action.";
+        speechOutput = "I do not support that action.";
     }
-
-   callback(session.attributes,
-            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
 
 function handleGetHelpRequest(intent, session, callback) {

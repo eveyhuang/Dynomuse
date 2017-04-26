@@ -29,9 +29,10 @@ var tuner_url_dict = {
     "G sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
 };
 
-var START_MODE = '';
-var PLAY_MODE = '_PLAY_MODE';
-var RESUME_DECISION_MODE = '_RESUME_DECISION_MODE';
+// hard coding the beats for now, not worrying about "up"
+var metronome_url_dict = {
+    "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4.mp3",
+}
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
 // etc.) The JSON body of the request is provided in the event parameter.
@@ -204,21 +205,21 @@ function handleMainMenuRequest(intent, session, callback) {
 		if (task === "tuner") {
 		    speechOutput += "Okay, let's check out the tuner.";
 			session.attributes.isTuning = true;
-			session.attributes.isRecordingList = false;
+			session.attributes.isRecording = false;
 			session.attributes.isMetronome = false;
 			handleTuningDialogRequest(intent, session, callback);
 		} else if (task === "metronome") {
 		    speechOutput += "Great! I'll take you to the metronome.";
 			session.attributes.isTuning = false;
-			session.attributes.isRecordingList = false;
+			session.attributes.isRecording = false;
 			session.attributes.isMetronome = true;
 			handleMetronomeRequest(intent, session, callback);
 		} else if (task === "record" || task === "recording") {
 		    speechOutput += "Alright, I'll tell you what recordings you currently have.";
 			session.attributes.isTuning = false;
-			session.attributes.isRecordingList = true;
+			session.attributes.isRecording = true;
 			session.attributes.isMetronome = false;
-			handleRecordingListRequest(intent, session, callback);
+			handleRecordingRequest(intent, session, callback);
 		}
 	}
 	else {
@@ -281,7 +282,7 @@ function handleTuningDialogRequest(intent, session, callback) {
 		
 		delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
-		delete session.attributes.isRecordingList;
+		delete session.attributes.isRecording;
 	
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
@@ -324,10 +325,9 @@ function handleRecordingListRequest(intent, session, callback) {
         speechOutput += session.attributes.speechOutput;
         delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
-		delete session.attributes.isRecordingList;
-
+		delete session.attributes.isRecording;
 	} else {
-	    if ("SelectTaskIntent" === intent.name && !session.attributes.isRecordingList) {
+        if ("GetRecordingListIntent" === intent.name && !session.attributes.isRecordingList) {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
             session.attributes.isRecordingList = true;
         } else {
@@ -387,23 +387,36 @@ function handleMetronomeRequest(intent, session, callback) {
         speechOutput += session.attributes.speechOutput;
         delete session.attributes.isMetronome;
         delete session.attributes.isTuning;
-        delete session.attributes.isRecordingList;
+        delete session.attributes.isRecording;
+        delete session.attributes.metronomeUrl;
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
     } else if ("SelectSpeedIntent" === intent.name) {
         var speed = intent.slots.utteredSpeed.value;
+        // for now the speed doesn't matter
+        speechOutput = "Tempo is set to " + speed + "BPM.";
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSigIntent" === intent.name) {
         var sig = intent.slots.utteredSig.value;
+        // for now time signature does not matter
+        speechOutput = "Time signature is now " + sig + ".";
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("AMAZON.PauseIntent" === intent.name) {
-        // do something
+        speechOutput = "Stopping the metronome.";
+        callback(session.attributes,
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
+        speechOutput = "Beginning the metronome.";
+        url = metronome_url_dict["default"];
+        session.attributes.metronomeUrl = url;
+        callback(session.attributes,
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", url, "pizza", 0));
     } else {
-        speechOutput += "I do not support that action.";
+        speechOutput = "I do not support that action.";
     }
-
-   callback(session.attributes,
-            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
 
 function handleGetHelpRequest(intent, session, callback) {
@@ -425,7 +438,7 @@ function handleGetHelpRequest(intent, session, callback) {
             + "You may also choose the time signature by saying 'play in 4 4 time' which is the default time signature. "
             + "You may also choose to have no time signature so all notes sound the same. "
 			+ "You may stop the metronome with 'stop' and resume or change your settings at any time.";
-    } else if (session.attributes.isRecordingList) {
+    } else if (session.attributes.isRecording) {
         speechOutput = "Here, we can listen to your previous recordings. "
             + "You can say 'Find Blue Song' to find your recording titled 'Blue Song'. "
             + "If I have your recording, I will play it for you. "

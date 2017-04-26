@@ -38,7 +38,7 @@ exports.handler = function (event, context) {
          * Uncomment this if statement and populate with your skill's application ID to
          * prevent someone else from configuring a skill that sends requests to this function.
          */
-		if (event.session.application.applicationId !== " amzn1.ask.skill.84e7e330-f816-4192-a826-6bf4c87279a0") {
+		if (event.session.application.applicationId !== "amzn1.ask.skill.84e7e330-f816-4192-a826-6bf4c87279a0") {
             context.fail("Invalid Application ID");
         }
 		
@@ -164,7 +164,7 @@ var CARD_TITLE = "Dyno Muse";
 
 function getWelcomeResponse(callback) {
     var sessionAttributes = {},
-        speechOutput = "Dyno Muse, what you would you like to do?",
+        speechOutput = "Welcome to Dyno Muse, what you would you like to do?",
         shouldEndSession = false,
         repromptText = "What else can I help you with?";
 
@@ -193,27 +193,27 @@ function handleBlankRequest(callback) { //Could have specific hints for blank re
 function handleMainMenuRequest(intent, session, callback) {
     // Parses initial task request to go into metronome, tuner, or recording task
 	/* Should we have separate intents for the three tasks? Make it analagous here with 3 cases //make Matthew explain
-    if ("SelectKnownDessertRecipeIntent" === intent.name) {
-        var item = intent.slots.DessertRecipe.value;
-    } else {
-        var item = intent.slots.FoodRecipe.value;
-    }
-	*/
-	
+    */
+
+	var speechOutput = ""
+
 	if ("SelectTaskIntent" === intent.name) {
 		//3 tasks possible
 		var task = intent.slots.utteredTask.value;
 		if (task === "tuner") {
+		    speechOutput += "Okay, let's check out the tuner.";
 			session.attributes.isTuning = true;
 			session.attributes.isRecording = false;
 			session.attributes.isMetronome = false;
 			handleTuningDialogRequest(intent, session, callback);
 		} else if (task === "metronome") {
+		    speechOutput += "Great! I'll take you to the metronome.";
 			session.attributes.isTuning = false;
 			session.attributes.isRecording = false;
 			session.attributes.isMetronome = true;
 			handleMetronomeRequest(intent, session, callback);
 		} else if (task === "record" || task === "recording") {
+		    speechOutput += "Alright, I'll tell you what recordings you currently have.";
 			session.attributes.isTuning = false;
 			session.attributes.isRecording = true;
 			session.attributes.isMetronome = false;
@@ -299,6 +299,8 @@ function handleTuningDialogRequest(intent, session, callback) {
         }
 			//add notes into speechOutput with SSML
 			
+    } else if ("SelectTaskIntent" === intent.name) {
+        speechOutput += "Welcome to the tuner! What note would you like to hear?"
     } else { //might not necessarily have to be reprompt
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
@@ -510,27 +512,27 @@ function handleGetHelpRequest(intent, session, callback) {
         repromptText = "",
         shouldEndSession = false;
     if (session.attributes.isTuning) {
-        speechOutput = "When tuning, you can have me play any note so you can hear it and adjust your instrument as needed."
+        speechOutput = "When tuning, you can have me play any note so you can hear it and adjust your instrument as needed. "
             + "To do this, you can say 'Tune to the key of G,' for example. "
-			+ "I will play the note for you twice, and you can either listen to the same note, choose a new one, or quit tuning"
+			+ "I will play the note for you twice, and you can either listen to the same note, choose a new one, or quit tuning."
            // + "You can say next or previous to have me read off the next or previous note in standard tuning. "
             // + "I can also start over from the stop if needed when you say 'start again'. "
     } else if (session.attributes.isMetronome) {
         speechOutput = "With the metronome, I can keep time in any tempo from 50 to 200 beats per minute. "
-            + "You can say 'play at 100 bpm', for example, to change the speed."
-            + "100bpm is the default setting"
-            + "You may also choose the time signature by saying 'play in 4 4 time' which is the default time signature"
-            + "You may also choose to have no time signature so all notes sound the same."
-			+ "You may stop the metronome with 'stop' and resume or change your settings at any time";
+            + "You can say 'play at 100 bpm', for example, to change the speed. "
+            + "100bpm is the default setting. "
+            + "You may also choose the time signature by saying 'play in 4 4 time' which is the default time signature. "
+            + "You may also choose to have no time signature so all notes sound the same. "
+			+ "You may stop the metronome with 'stop' and resume or change your settings at any time.";
     } else if (session.attributes.isRecording) {
-        speechOutput = "Here, we can listen to your previous recordings "
-            + "You can say 'Find Blue Song' to find your recording titled 'Blue Song'"
-            + "If I have your recording, I will play it for you"
-            + "If your unsure of the recording title, I will ask you if you want to go through the list of your recordings."
-			+ "For each recording in your saved recordings, I will tell you the name and you will have the option to 'listen' to it or go to the 'next' or 'previous' recording"
+        speechOutput = "Here, we can listen to your previous recordings. "
+            + "You can say 'Find Blue Song' to find your recording titled 'Blue Song'. "
+            + "If I have your recording, I will play it for you. "
+            + "If your unsure of the recording title, I will ask you if you want to go through the list of your recordings. "
+			+ "For each recording in your saved recordings, I will tell you the name and you will have the option to 'listen' to it or go to the 'next' or 'previous' recording. "
 			+ "You may 'pause', 'play', 'restart', or 'stop' your recording at any time.";
     }else {
-        speechOutput = "You can tune your instrument, use a metronome to practice, or listen to your recordings" //If user just says help in the main menu?
+        speechOutput = "You can tune your instrument, use a metronome to practice, or listen to your recordings. " //If user just says help in the main menu?
             + "For example you can say, 'I'd like to tune in the key of G.'";
         }
     callback(session.attributes,

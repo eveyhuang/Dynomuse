@@ -47,7 +47,7 @@
     },
 	{
 		"intent": "GetRecordingListIntent"
-	}
+	},
     {
       "intent": "AMAZON.StartOverIntent"
     },

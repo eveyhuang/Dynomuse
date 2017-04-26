@@ -363,14 +363,13 @@ function handleRecordingRequest(intent, session, callback) {
         delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
-		delete	sessions.attributes.isRecordingList;
-		delete sessions.attributes.index;
+		delete session.attributes.isRecordingList;
 		delete session.attributes.utteredTask;
 		delete session.attributes.utteredNote;
 		delete session.attributes.utteredSpeed;
 		delete session.attributes.utteredRec;
     } else if ("GetRecordingListIntent" === intent.name) {
-		sessions.attributes.isRecordingList = true;
+		session.attributes.isRecordingList = true;
 	} else if ("SelectRecIntent" === intent.name && session.attributes.utteredRec) {
 		//try to find selected song in table of recordings pulled from earlier
 		var recording = session.attributes.utteredRec.value;
@@ -424,42 +423,45 @@ function handleRecordingListRequest(intent, session, callback) {
 		delete session.attributes.utteredNote;
 		delete session.attributes.utteredSpeed;
 		delete session.attributes.utteredRec;
-		delete session.attributes.index;
 	} else {
         if ("GetRecordingListIntent" === intent.name && !session.attributes.isRecordingList) {
-            speechOutput += "I'll go through your recordings, for each file you can decide if you want to listen to it or go to the next file."
+            speechOutput += "I can tell you what recording I have found or you can ask for a particular recording right now.";
             session.attributes.isRecordingList = true;
         } else {
-            // Progress through the list based on response
             var sample = -1;
-            if ("GetRecordingListIntent" === intent.name) { // if they say get recording intent, treat like "next" intent
-                sample = getIndex("AMAZON.NextIntent", session.attributes.index, session.attributes.recordings.length);
+            if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
+                numRec = recordings.length;
+                if (numRec == 0) {
+                    speechOutput = "I did not find any recordings. Have you recorded some recently?";
+                }
+                else {
+                     if (numRec == 1) {
+                        plural = "s";
+                    } else {
+                        plural = ""
+                    }
+                    // Hacky way of parsing through recordings and feeding into a string
+                    listOfRecordings = "";
+                    for (var key in recordings) {
+                        listOfRecordings += key;
+                        listOfRecordings += ", ";
+                    }
+                    listOfRecordings = listOfRecordings.substring(0, listOfRecordings.length - 2);
+                    speechOutput = "I found " + numRec + " recording" + plural + ". They are: " + listOfRecordings + ".";
+                }
             } else if ("SelectRecIntent" === intent.name) {
-				if (session.attributes.utteredRec) {
+                rec = session.attributes.utteredRec.value;
+				if (rec in recordings) {
 					//play the recording they said to
-                    var recording = recordings[session.attributes.utteredRec.value.toLowerCase()];
-				}
-				else {
-					//play the recording we are at right now in the list
-					var recording = recordings[sample];
-				}
-                speechOutput = {
-                    type: "SSML",
-                    ssml: "<speak><audio src=\"" + recording + "\"></speak>"
-                };
-			} else {
-                sample = getIndex(intent.name, session.attributes.index, session.attributes.recordings.length); 
-            }
-            // TO-DO: translate a bit of the old code to the new code
-            var index = session.attributes.index; //will have to add this as an attribute everywhere
-            if (sample < session.attributes.recordings.length) {
-                speechOutput += session.attributes.directions[sample];
-                session.attributes.index = sample;
-            } else {
-                speechOutput += "You have no more recording files "
-                    + "You can go back to the beginning of the list by saying 'start over'. "
-                    + "If you are done, you may quit. ";
-            }      
+                    var recording = recordings[rec.toLowerCase()];
+                    speechOutput = {
+                        type: "SSML",
+                        ssml: "<speak><audio src=\"" + recording + "\"></speak>"
+                    };
+				} else {
+                    speechOutput = "I could not find the recording titled " + rec.toLowerCase() + ".";
+                }
+			}     
         }
     }
 
@@ -481,25 +483,24 @@ function handleMetronomeRequest(intent, session, callback) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
         delete session.attributes.isMetronome;
-      delete session.attributes.isTuning;
-      delete session.attributes.isRecording;
-      delete session.attributes.utteredTask;
-      delete session.attributes.utteredNote;
-      delete session.attributes.utteredSpeed;
-      delete session.attributes.utteredRec;
-      delete session.attributes.index;
-   } else if ("SelectSpeedIntent" === intent.name) {
-      var speed = session.attributes.utteredSpeed.value;
-   } else if ("SelectSigIntent" === intent.name) {
-      var sig = session.attributes.utteredSig.value;
-   } else if ("AMAZON.PauseIntent" === intent.name) {
-   } else if ("AMAZON.ResumeIntent" === intent.name) {
-   }
+        delete session.attributes.isTuning;
+        delete session.attributes.isRecording;
+        delete session.attributes.utteredTask;
+        delete session.attributes.utteredNote;
+        delete session.attributes.utteredSpeed;
+        delete session.attributes.utteredRec;
+        } else if ("SelectSpeedIntent" === intent.name) {
+            var speed = session.attributes.utteredSpeed.value;
+        } else if ("SelectSigIntent" === intent.name) {
+            var sig = session.attributes.utteredSig.value;
+        } else if ("AMAZON.PauseIntent" === intent.name) {
+            // do something
+        } else if ("AMAZON.ResumeIntent" === intent.name) {
+            // also do something
+        }
 
    callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
-
-
 }
 
 function handleGetHelpRequest(intent, session, callback) {
@@ -588,24 +589,4 @@ function buildResponse(sessionAttributes, speechletResponse) {
         sessionAttributes: sessionAttributes,
         response: speechletResponse
     };
-}
-
-// ------- Additional Helper Functions --------
-function getIndex(intentName, index, maxLength) {
-    // Helper function to get an index
-    // Index can go forward 1, backwards 1, to the end (maxLength - 1), or the beginning (0)
-
-    // Note, I think that Next / Prev Intents would be matched if they said "Next ingredient", NLP is beautiful
-    // But if not, it's not hard to just add the intent.
-    var i = index;
-    if ("AMAZON.StartOverIntent" === intentName) {
-        i = 0;
-    } else if ("AMAZON.NextIntent" === intentName) {
-        i = index + 1;
-    } else if ("AMAZON.PreviousIntent" === intentName) {
-        i = Math.max(0, index - 1);
-    } else if ("LastItemIntent" === intentName) {
-        i = maxLength - 1;
-    }
-    return i
 }

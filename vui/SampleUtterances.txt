@@ -21,7 +21,7 @@ SelectSigIntent {utteredSig} time
 SelectRecIntent find {utteredRec}
 SelectRecIntent find the file {utteredRec}
 SelectRecIntent do you have {utteredRec}
-SelectRecIntent listen
+SelectRecIntent listen to {utteredRec}
 
 GetRecordingListIntent go through list
 GetRecordingListIntent recordings

@@ -329,12 +329,11 @@ function handleRecordingListRequest(intent, session, callback) {
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
 	} else {
-        if ("GetRecordingListIntent" === intent.name && !session.attributes.isRecordingList) {
+        if ("SelectTaskIntent" === intent.name && intent.slots.utteredTask.value === "tuner") {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
-            session.attributes.isRecordingList = true;
         } else {
             if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
-                numRec = recordings.length;
+                var numRec = recordings.length;
                 if (numRec == 0) {
                     speechOutput = "I did not find any recordings. Have you recorded some recently?";
                 }
@@ -345,7 +344,7 @@ function handleRecordingListRequest(intent, session, callback) {
                         plural = "";
                     }
                     // Hacky way of parsing through recordings and feeding into a string
-                    listOfRecordings = "";
+                    var listOfRecordings = "";
                     for (var key in recordings) {
                         listOfRecordings += key;
                         listOfRecordings += ", ";
@@ -354,7 +353,7 @@ function handleRecordingListRequest(intent, session, callback) {
                     speechOutput = "I found " + numRec + " recording" + plural + ". They are: " + listOfRecordings + ".";
                 }
             } else if ("SelectRecIntent" === intent.name) {
-                rec = intent.slots.utteredRec.value;
+                var rec = intent.slots.utteredRec.value;
                 var recording = recordings[rec.toLowerCase()];
 				if (recording) {
 					//play the recording they said to

@@ -329,7 +329,7 @@ function handleRecordingListRequest(intent, session, callback) {
 		delete session.attributes.utteredSpeed;
 	} else {
         if ("GetRecordingListIntent" === intent.name && !session.attributes.isRecordingList) {
-            speechOutput += "I can tell you what recording I have found or you can ask for a particular recording right now.";
+            speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
             session.attributes.isRecordingList = true;
         } else {
             var sample = -1;
@@ -389,6 +389,8 @@ function handleMetronomeRequest(intent, session, callback) {
         delete session.attributes.isMetronome;
         delete session.attributes.isTuning;
         delete session.attributes.isRecording;
+    } else if ("SelectTaskIntent" === intent.name) {
+        speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
     } else if ("SelectSpeedIntent" === intent.name) {
         var speed = intent.slots.utteredSpeed.value;
     } else if ("SelectSigIntent" === intent.name) {

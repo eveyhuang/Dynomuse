@@ -9,6 +9,9 @@
         <item name="android:navigationBarColor">@color/navigation</item>
         <item name="android:windowBackground">@color/background</item>
         <item name="android:textColorPrimary">@color/text</item>
+        <item name="colorControlNormal">#EAEAEA</item>
+        <item name="colorControlActivated">#FFEBB7</item>
+        <item name="colorControlHighlight">#FF5722</item>
 
     </style>
 

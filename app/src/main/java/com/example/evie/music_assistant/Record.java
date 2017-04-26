@@ -4,6 +4,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,13 +27,52 @@ public class Record extends AppCompatActivity {
     private Thread recordingThread = null;
     private boolean isRecording = false;
     private int bufferSizeInBytes;
-    final int SAMPLE_RATE = 44100;
+    private int bufferSize;
+    private ImageButton startButton,stopButton;
+
+    TextView timerTextView;
+    long startTime = 0;
+
+    //runs without a timer by reposting this handler at the end of the runnable
+    Handler timerHandler = new Handler();
+    Runnable timerRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            long millis = System.currentTimeMillis() - startTime;
+            int seconds = (int) (millis / 1000);
+            int minutes = seconds / 60;
+            seconds = seconds % 60;
+
+            timerTextView.setText(String.format("%d:%02d", minutes, seconds));
+
+            timerHandler.postDelayed(this, 500);
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("Record");
         setContentView(R.layout.recordscreen);
+        startButton = (ImageButton) findViewById (R.id.imageButton2);
+        stopButton = (ImageButton)  findViewById (R.id.imageButton5);
+
+        //startButton.setOnClickListener (startListener);
+        stopButton.setOnClickListener (stopListener);
+
+        bufferSize = AudioRecord.getMinBufferSize(44100,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
+
+        recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
+                44100,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize);
+
+        timerTextView = (TextView) findViewById(R.id.timerTextView);
     }
 
     private void goToRecordList(View view) {
@@ -44,21 +84,23 @@ public class Record extends AppCompatActivity {
     int BufferElements2Rec = 1024; // want to play 2048 (2K) since 2 bytes we use only 1024
     int BytesPerElement = 2; // 2 bytes in 16bit format
 
+
     public void startRecording(View view){
 
        // AudioRecord recorder = findAudioRecord();
-        int bufferSize = AudioRecord.getMinBufferSize(44100,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT);
-
-        final AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
-                44100,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                bufferSize);
+        if (recorder==null & isRecording == false){
+            recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
+                    44100,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    bufferSize);
+        }
 
         recorder.startRecording();
         isRecording = true;
+        startTime = System.currentTimeMillis();
+        timerHandler.postDelayed(timerRunnable, 0);
+
         recordingThread = new Thread(new Runnable() {
             public void run() {
                 String filePath = Environment.getExternalStorageDirectory().getPath();
@@ -73,8 +115,9 @@ public class Record extends AppCompatActivity {
 
                 while (isRecording) {
                     // gets the voice output from microphone to byte format
+
                     recorder.read(sData, 0, BufferElements2Rec);
-                    System.out.println("Short wirting to file" + sData.toString());
+                    System.out.println("Short wirting to file" + sData.toString() + " at " + filePath);
                     try {
                         // // writes the data to file from buffer
                         // // stores the voice buffer
@@ -109,47 +152,24 @@ public class Record extends AppCompatActivity {
         return bytes;
     }
 
-    public void stopRecording(View view) {
-        // stops the recording activity
-        if (null != recorder) {
-            isRecording = false;
-
-
-            recorder.stop();
-            recorder.release();
-
-            recorder = null;
-            recordingThread = null;
-        }
-    }
-
-    private static int[] mSampleRates = new int[] { 8000, 11025, 22050, 44100 };
-    public AudioRecord findAudioRecord() {
-        for (int rate : mSampleRates) {
-            for (short audioFormat : new short[] { AudioFormat.ENCODING_PCM_16BIT, AudioFormat.ENCODING_PCM_8BIT }) {
-                for (short channelConfig : new short[] { AudioFormat.CHANNEL_IN_MONO, AudioFormat.CHANNEL_IN_STEREO }) {
-                    try {
-                        Log.d("TEST", "Attempting rate " + rate + "Hz, bits: " + audioFormat + ", channel: "
-                                + channelConfig);
-                        int bufferSize = AudioRecord.getMinBufferSize(rate, channelConfig, audioFormat);
-
-                        if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
-                            // check if we can instantiate and have a success
-                            AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, rate, channelConfig, audioFormat, bufferSize);
-
-                            if (recorder.getState() == AudioRecord.STATE_INITIALIZED)
-                                bufferSizeInBytes=bufferSize;
-                                return recorder;
-                        }
-                    } catch (Exception e) {
-                        Log.e("TEST", rate + "Exception, keep trying.",e);
-                    }
-                }
+    private final View.OnClickListener stopListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            if (null != recorder) {
+                isRecording = false;
+                recorder.stop();
+                recorder.release();
+                recorder = null;
+                recordingThread = null;
+                timerHandler.removeCallbacks(timerRunnable);
+                System.out.println("Recorder released");
+                EditText et=(EditText)findViewById(R.id.editText2);
+                et.setVisibility(View.VISIBLE);
             }
-        }
-        return null;
-    }
 
+        }
+
+    };
 
 
 }

@@ -43,7 +43,6 @@
             android:adjustViewBounds="true"
             android:cropToPadding="false"
             android:scaleType="fitCenter"
-            android:onClick="stopRecording"
             android:background="@drawable/abc_btn_borderless_material"
             android:layout_above="@+id/imageButton2"
             android:layout_toEndOf="@+id/imageButton2" />
@@ -68,15 +67,17 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
 
-        android:layout_above="@+id/container"
-        android:layout_centerHorizontal="true">
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="42dp">
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="257dp"
+            android:layout_height="200dp"
             android:src="@drawable/microphone"
             android:adjustViewBounds="true"
-            android:scaleType="fitXY"/>
+            android:layout_gravity="center"
+            android:scaleType="fitXY"
+            android:layout_width="190dp" />
 
         <View
             android:layout_width="match_parent"
@@ -86,11 +87,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="00:00"
-            android:textSize="90dp"
-            android:textColor="@color/text"
-            android:gravity="center_horizontal"/>
+            android:textSize="70dp"
+            android:textColor="#E67A7A"
+            android:gravity="center_horizontal"
+            android:id="@+id/timerTextView" />
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="30dp"
+            android:gravity="center_horizontal"
+            android:ems="10"
+            android:id="@+id/editText2"
+            android:hint="Name your work"
+            android:textColorHint="#DBE2EF"
+            android:textColor="#9DDCDC"
+            android:layout_centerVertical="true"
+            android:layout_alignStart="@+id/imageButton2"
+            android:inputType="text"
+            android:visibility = "gone"/>
 
     </LinearLayout>
+
+
 
 
 </RelativeLayout>

@@ -25,6 +25,7 @@
             android:adjustViewBounds="true"
             android:cropToPadding="false"
             android:scaleType="fitCenter"
+            android:onClick="goToRecordList"
             android:background="@drawable/abc_btn_borderless_material"
             android:layout_alignBottom="@+id/container"
             android:layout_toStartOf="@+id/imageButton2" />
@@ -42,38 +43,10 @@
             android:adjustViewBounds="true"
             android:cropToPadding="false"
             android:scaleType="fitCenter"
+            android:onClick="stopRecording"
             android:background="@drawable/abc_btn_borderless_material"
             android:layout_above="@+id/imageButton2"
             android:layout_toEndOf="@+id/imageButton2" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_above="@+id/container"
-        android:layout_centerHorizontal="true"
-
-        android:layout_marginTop="20dp">
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="257dp"
-            android:src="@drawable/microphone"
-            android:adjustViewBounds="true"
-            android:scaleType="fitXY"/>
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="40dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textSize="100dp"
-            android:textColor="@color/text"
-            android:gravity="center_horizontal"/>
 
     </LinearLayout>
 
@@ -84,10 +57,40 @@
         android:id="@+id/imageButton2"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
+        android:onClick="startRecording"
         android:background="@drawable/abc_btn_borderless_material"
         android:layout_marginBottom="66dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+
+        android:layout_above="@+id/container"
+        android:layout_centerHorizontal="true">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="257dp"
+            android:src="@drawable/microphone"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="40dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textSize="90dp"
+            android:textColor="@color/text"
+            android:gravity="center_horizontal"/>
+
+    </LinearLayout>
 
 
 </RelativeLayout>

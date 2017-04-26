@@ -204,21 +204,21 @@ function handleMainMenuRequest(intent, session, callback) {
 		if (task === "tuner") {
 		    speechOutput += "Okay, let's check out the tuner.";
 			session.attributes.isTuning = true;
-			session.attributes.isRecording = false;
+			session.attributes.isRecordingList = false;
 			session.attributes.isMetronome = false;
 			handleTuningDialogRequest(intent, session, callback);
 		} else if (task === "metronome") {
 		    speechOutput += "Great! I'll take you to the metronome.";
 			session.attributes.isTuning = false;
-			session.attributes.isRecording = false;
+			session.attributes.isRecordingList = false;
 			session.attributes.isMetronome = true;
 			handleMetronomeRequest(intent, session, callback);
 		} else if (task === "record" || task === "recording") {
 		    speechOutput += "Alright, I'll tell you what recordings you currently have.";
 			session.attributes.isTuning = false;
-			session.attributes.isRecording = true;
+			session.attributes.isRecordingList = true;
 			session.attributes.isMetronome = false;
-			handleRecordingRequest(intent, session, callback);
+			handleRecordingListRequest(intent, session, callback);
 		}
 	}
 	else {
@@ -281,7 +281,7 @@ function handleTuningDialogRequest(intent, session, callback) {
 		
 		delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
-		delete session.attributes.isRecording;
+		delete session.attributes.isRecordingList;
 	
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
@@ -324,11 +324,10 @@ function handleRecordingListRequest(intent, session, callback) {
         speechOutput += session.attributes.speechOutput;
         delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
-		delete session.attributes.isRecording;
-		delete session.attributes.utteredTask;
-		delete session.attributes.utteredSpeed;
+		delete session.attributes.isRecordingList;
+
 	} else {
-        if ("GetRecordingListIntent" === intent.name && !session.attributes.isRecordingList) {
+	    if ("SelectTaskIntent" === intent.name && !session.attributes.isRecordingList) {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
             session.attributes.isRecordingList = true;
         } else {
@@ -388,7 +387,7 @@ function handleMetronomeRequest(intent, session, callback) {
         speechOutput += session.attributes.speechOutput;
         delete session.attributes.isMetronome;
         delete session.attributes.isTuning;
-        delete session.attributes.isRecording;
+        delete session.attributes.isRecordingList;
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
     } else if ("SelectSpeedIntent" === intent.name) {
@@ -426,7 +425,7 @@ function handleGetHelpRequest(intent, session, callback) {
             + "You may also choose the time signature by saying 'play in 4 4 time' which is the default time signature. "
             + "You may also choose to have no time signature so all notes sound the same. "
 			+ "You may stop the metronome with 'stop' and resume or change your settings at any time.";
-    } else if (session.attributes.isRecording) {
+    } else if (session.attributes.isRecordingList) {
         speechOutput = "Here, we can listen to your previous recordings. "
             + "You can say 'Find Blue Song' to find your recording titled 'Blue Song'. "
             + "If I have your recording, I will play it for you. "

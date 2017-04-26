@@ -133,13 +133,14 @@ function onIntent(intentRequest, session, callback) {
     var intent = intentRequest.intent,
         intentName = intentRequest.intent.name;
 
+
     if ("AMAZON.HelpIntent" === intentName) {
         handleGetHelpRequest(intent, session, callback);
     }
     else if (session.attributes && session.attributes.isTuning) {
         handleTuningDialogRequest(intent, session, callback);
 	} else if (session.attributes && session.attributes.isRecordingList) {
-        handleRecordingListRequest(intent, session, callback);	
+        handleRecordingListRequest(intent, session, callback);
 	} else if (session.attributes && session.attributes.isMetronome) {
         handleMetronomeRequest(intent, session, callback);
     } else if ("SelectTaskIntent" === intentName) {
@@ -222,6 +223,11 @@ function handleMainMenuRequest(intent, session, callback) {
 			session.attributes.isRecordingList = true;
 			session.attributes.isMetronome = false;
 			handleRecordingListRequest(intent, session, callback);
+		} else {
+		    var reprompt = session.attributes.repromptText,
+            speechOutput = "I'm sorry, I couldn't understand you. You can start the metronome, tuner, or look at your recordings." + reprompt;
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 		}
 	}
 	else {
@@ -248,10 +254,10 @@ function handleMainMenuRequest(intent, session, callback) {
 
         session.attributes.index = -1;
         // will be used to signify that the user is going through the ingredients list
-		
-		
+
+
         //session.attributes.isIngredientsList = false;
-        
+
 		var reprompt = session.attributes.repromptText,
             speechOutput = "I found the recording called "
                 + item + " . "
@@ -264,7 +270,7 @@ function handleMainMenuRequest(intent, session, callback) {
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
     }
-	
+
 	*/
 }
 
@@ -274,18 +280,18 @@ function handleTuningDialogRequest(intent, session, callback) {
 	// - Back out into the main menu
 	// - Start with standard guitar tuning EADGBE -- actually nixing this would be easier
 	// - Manually choose each note they would like to tune to
-	
+
 	var speechOutput = ""
 
     if ("AMAZON.StopIntent" === intent.name) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
-        
-		
+
+
 		delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
-	
+
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
 		var note = intent.slots.utteredNote.value;
@@ -297,7 +303,7 @@ function handleTuningDialogRequest(intent, session, callback) {
             ssml: str
         }
 			//add notes into speechOutput with SSML
-			
+
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the tuner! What note would you like to hear?"
     } else { //might not necessarily have to be reprompt
@@ -306,15 +312,15 @@ function handleTuningDialogRequest(intent, session, callback) {
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 	}
-	
+
 
     callback(session.attributes,
         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
-}		
-	
+}
+
 function handleRecordingListRequest(intent, session, callback) {
     // Handles walking through the list of recordings
-    // User can: 
+    // User can:
 	// - Go through the list of recordings one by one, calls handleRecordingListRequest
     //   * If the user goes forward at the end, let them know there is no more recordings.
     //   * If the user goes backwards at the beginning, just repeat the first recording's title.
@@ -331,6 +337,7 @@ function handleRecordingListRequest(intent, session, callback) {
 	} else {
         if ("SelectTaskIntent" === intent.name && intent.slots.utteredTask.value === "tuner") {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
+            session.attributes.isRecordingList = true;
         } else {
             if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
                 var numRec = recordings.length;
@@ -364,7 +371,7 @@ function handleRecordingListRequest(intent, session, callback) {
 				} else {
                     speechOutput = "I could not find the recording titled " + rec.toLowerCase() + ".";
                 }
-			}     
+			}
         }
     }
 
@@ -391,6 +398,8 @@ function handleMetronomeRequest(intent, session, callback) {
         delete session.attributes.metronomeUrl;
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSpeedIntent" === intent.name) {
         var speed = intent.slots.utteredSpeed.value;
         // for now the speed doesn't matter

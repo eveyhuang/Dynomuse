@@ -297,24 +297,24 @@ function handleTuningDialogRequest(intent, session, callback) {
         var url = tuner_url_dict[note];
         var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
                 + "<audio src=\"" + url + "\"> <break time='1s'/> <audio src=\"" + url + "\"> </speak>";
-        speechOutput = {
-            type: "SSML",
-            ssml: str
-        }
+        //speechOutput = {
+        //    "type": "SSML",
+        //    "ssml": "<speak>hello</speak>"
+        //}
 			//add notes into speechOutput with SSML
 
+        callback(session.attributes,
+            buildSSMLResponse(CARD_TITLE, str, "Here is the note!", false));
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the tuner! What note would you like to hear?"
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else { //might not necessarily have to be reprompt
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 	}
-
-
-    callback(session.attributes,
-        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
 
 function handleRecordingListRequest(intent, session, callback) {
@@ -523,6 +523,27 @@ function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSess
             }
         },
         directives: [buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds)],
+        shouldEndSession: shouldEndSession
+    };
+}
+
+function buildSSMLResponse(title, output, repromptText, shouldEndSession) {
+    return {
+        outputSpeech: {
+            type: "ssml"
+            ssml: output
+        },
+        card: {
+            type: "Simple",
+            title: title,
+            content: repromptText
+        },
+        reprompt: {
+            outputSpeech: {
+                type: "PlainText",
+                text: repromptText
+            }
+        },
         shouldEndSession: shouldEndSession
     };
 }

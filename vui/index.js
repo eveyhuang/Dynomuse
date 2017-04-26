@@ -31,7 +31,7 @@ var tuner_url_dict = {
 
 // hard coding the beats for now, not worrying about "up"
 var metronome_url_dict = {
-    
+    "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4.mp3",
 }
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
@@ -388,6 +388,7 @@ function handleMetronomeRequest(intent, session, callback) {
         delete session.attributes.isMetronome;
         delete session.attributes.isTuning;
         delete session.attributes.isRecording;
+        delete session.attributes.metronomeUrl;
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
     } else if ("SelectSpeedIntent" === intent.name) {
@@ -403,10 +404,16 @@ function handleMetronomeRequest(intent, session, callback) {
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("AMAZON.PauseIntent" === intent.name) {
+        speechOutput = "Stopping the metronome.";
         callback(session.attributes,
             buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
+        speechOutput = "Beginning the metronome.";
+        url = metronome_url_dict["default"];
+        session.attributes.metronomeUrl = url;
+        callback(session.attributes,
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", url, "pizza", 0));
     } else {
         speechOutput = "I do not support that action.";
     }

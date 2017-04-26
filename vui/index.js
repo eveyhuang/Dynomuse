@@ -32,7 +32,7 @@ var tuner_url_dict = {
 // hard coding the beats for now, not worrying about "up"
 var metronome_url_dict = {
     "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4.mp3",
-}
+};
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
 // etc.) The JSON body of the request is provided in the event parameter.
@@ -69,7 +69,9 @@ exports.handler = function (event, context) {
 
         if (event.session.new) {
             onSessionStarted({requestId: event.request.requestId}, event.session);
-        } else if (event.request.type === "AudioPlayer.PlaybackNearlyFinished" && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl) {
+        }
+
+        if (event.request.type === "AudioPlayer.PlaybackNearlyFinished" && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl) {
             repeatMetronomeDirective(event.session.attributes.metronomeUrl, "sample-token");
         } else if (event.request.type === "LaunchRequest") {
             onLaunch(event.request,
@@ -205,21 +207,21 @@ function handleMainMenuRequest(intent, session, callback) {
 		if (task === "tuner") {
 		    speechOutput += "Okay, let's check out the tuner.";
 			session.attributes.isTuning = true;
-			session.attributes.isRecording = false;
+			session.attributes.isRecordingList = false;
 			session.attributes.isMetronome = false;
 			handleTuningDialogRequest(intent, session, callback);
 		} else if (task === "metronome") {
 		    speechOutput += "Great! I'll take you to the metronome.";
 			session.attributes.isTuning = false;
-			session.attributes.isRecording = false;
+			session.attributes.isRecordingList = false;
 			session.attributes.isMetronome = true;
 			handleMetronomeRequest(intent, session, callback);
 		} else if (task === "record" || task === "recording") {
 		    speechOutput += "Alright, I'll tell you what recordings you currently have.";
 			session.attributes.isTuning = false;
-			session.attributes.isRecording = true;
+			session.attributes.isRecordingList = true;
 			session.attributes.isMetronome = false;
-			handleRecordingRequest(intent, session, callback);
+			handleRecordingListRequest(intent, session, callback);
 		}
 	}
 	else {
@@ -331,7 +333,6 @@ function handleRecordingListRequest(intent, session, callback) {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
             session.attributes.isRecordingList = true;
         } else {
-            var sample = -1;
             if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
                 numRec = recordings.length;
                 if (numRec == 0) {
@@ -341,7 +342,7 @@ function handleRecordingListRequest(intent, session, callback) {
                      if (numRec == 1) {
                         plural = "s";
                     } else {
-                        plural = ""
+                        plural = "";
                     }
                     // Hacky way of parsing through recordings and feeding into a string
                     listOfRecordings = "";
@@ -380,7 +381,7 @@ function handleMetronomeRequest(intent, session, callback) {
      * - change the tempo
      * - change the time signature
     */
-   var speechOutput = ""
+   var speechOutput = "";
 
    if ("AMAZON.StopIntent" === intent.name) {
         // Back out into the main menu
@@ -438,7 +439,7 @@ function handleGetHelpRequest(intent, session, callback) {
             + "You may also choose the time signature by saying 'play in 4 4 time' which is the default time signature. "
             + "You may also choose to have no time signature so all notes sound the same. "
 			+ "You may stop the metronome with 'stop' and resume or change your settings at any time.";
-    } else if (session.attributes.isRecording) {
+    } else if (session.attributes.isRecordingList) {
         speechOutput = "Here, we can listen to your previous recordings. "
             + "You can say 'Find Blue Song' to find your recording titled 'Blue Song'. "
             + "If I have your recording, I will play it for you. "
@@ -459,7 +460,7 @@ function handleFinishSessionRequest(intent, session, callback) {
         buildSpeechletResponseWithoutCard("Have a good day!", "", true));
 }
 
-// ------- Helper functions to build responses -------
+// ------- Helper functions to build responses and directives -------
 
 function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds) {
     var audioPlayerDirective;

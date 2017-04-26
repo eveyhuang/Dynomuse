@@ -136,16 +136,15 @@ function onIntent(intentRequest, session, callback) {
 
     if ("AMAZON.HelpIntent" === intentName) {
         handleGetHelpRequest(intent, session, callback);
-    }
-    else if (session.attributes && session.attributes.isTuning) {
+    } else if ("SelectTaskIntent" === intentName) {
+        handleMainMenuRequest(intent, session, callback)
+    } else if (session.attributes && session.attributes.isTuning) {
         handleTuningDialogRequest(intent, session, callback);
 	} else if (session.attributes && session.attributes.isRecordingList) {
         handleRecordingListRequest(intent, session, callback);
 	} else if (session.attributes && session.attributes.isMetronome) {
         handleMetronomeRequest(intent, session, callback);
-    } else if ("SelectTaskIntent" === intentName) {
-		handleMainMenuRequest(intent, session, callback)
-	} else if ("AMAZON.StopIntent" === intentName) { // quit if at main menu (implied from not being in any current dialog)
+    } else if ("AMAZON.StopIntent" === intentName) { // quit if at main menu (implied from not being in any current dialog)
         handleFinishSessionRequest(intent, session, callback);
     } else {
         throw "Invalid intent";

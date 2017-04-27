@@ -64,6 +64,7 @@ exports.handler = function (event, context) {
                 recordings_dict[name] = item;
             }
         });*/
+        // strip extensions, title is marked as if it had no extension
         recordings["piano"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/piano.mp3";
         recordings["sax"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/sax.mp3";
 
@@ -336,22 +337,22 @@ function handleRecordingListRequest(intent, session, callback) {
                 buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
         } else {
             if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
-                var numRec = recordings.length;
+                var numRec = 0;
+                var listOfRecordings = "";
+                    for (var key in recordings) {
+                        numRec += 1;
+                        listOfRecordings += key;
+                        listOfRecordings += ", ";
+                    }
                 if (numRec == 0) {
                     speechOutput = "I did not find any recordings. Have you recorded some recently?";
                 }
                 else {
-                     if (numRec == 1) {
-                        plural = "s";
-                    } else {
+                    var plural = "s"
+                    if (numRec == 1) {
                         plural = "";
                     }
                     // Hacky way of parsing through recordings and feeding into a string
-                    var listOfRecordings = "";
-                    for (var key in recordings) {
-                        listOfRecordings += key;
-                        listOfRecordings += ", ";
-                    }
                     listOfRecordings = listOfRecordings.substring(0, listOfRecordings.length - 2);
                     speechOutput = "I found " + numRec + " recording" + plural + ". They are: " + listOfRecordings + ".";
                 }
@@ -365,7 +366,7 @@ function handleRecordingListRequest(intent, session, callback) {
                     recording = "'" + recording + "'";
                     speechOutput = "<speak><audio src=" + recording + "/></speak>";
                     callback(session.attributes,
-                        buildSSSMLResponse(CARD_TITLE, speechOutput, "Here is the recording!", false));
+                        buildSSMLResponse(CARD_TITLE, speechOutput, "Here is the recording!", false));
 				} else {
                     speechOutput = "I could not find the recording titled " + rec.toLowerCase() + ".";
 

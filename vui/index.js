@@ -151,6 +151,8 @@ function onIntent(intentRequest, session, callback) {
         handleMetronomeRequest(intent, session, callback);
     } else if ("AMAZON.StopIntent" === intentName) { // quit if at main menu (implied from not being in any current dialog)
         handleFinishSessionRequest(intent, session, callback);
+    } else if ("AMAZON.PauseIntent" === intentName) {
+        handlePauseRequest(intent, session, callback);
     } else {
         throw "Invalid intent";
     }
@@ -198,6 +200,12 @@ function handleBlankRequest(callback) { //Could have specific hints for blank re
         callback(sessionAttributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, repromptText, shouldEndSession));
     }
+
+function handlePauseRequest(intent, session, callback) {
+    var speechOutput = "Stopping the metronome. What else do you want to do?";
+    callback(session.attributes,
+        buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "stop", null, null, null, null, null));
+}
 
 function handleMainMenuRequest(intent, session, callback) {
     // Parses initial task request to go into metronome, tuner, or recording task
@@ -428,7 +436,7 @@ function handleMetronomeRequest(intent, session, callback) {
     } else if ("AMAZON.PauseIntent" === intent.name) {
         speechOutput = "Stopping the metronome. What else do you want to do?";
         callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null, null));
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "stop", null, null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
         speechOutput = "Beginning the metronome.";

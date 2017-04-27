@@ -10,23 +10,23 @@ var recordings = {};
 
 // Way to make it dry: get the base url and append the string associated + .mp3
 var tuner_url_dict = {
-    "A flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
-    "A": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/A4.mp3",
-    "A sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
-    "B flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
-    "B": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/B4.mp3",
-    "C": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
-    "C sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
-    "D flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Csharp4.mp3",
-    "D": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/D4.mp3",
-    "D sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
-    "E flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
-    "E": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/E4.mp3",
-    "F": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/F4.mp3",
-    "F sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
-    "G flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
-    "G": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/G4.mp3",
-    "G sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
+    "a flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
+    "a": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/A4.mp3",
+    "a sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
+    "b flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
+    "b": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/B4.mp3",
+    "c": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
+    "c sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
+    "d flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Csharp4.mp3",
+    "d": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/D4.mp3",
+    "d sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
+    "e flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
+    "e": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/E4.mp3",
+    "f": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/F4.mp3",
+    "f sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
+    "g flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
+    "g": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/G4.mp3",
+    "g sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
 };
 
 // hard coding the beats for now, not worrying about "up"
@@ -294,9 +294,11 @@ function handleTuningDialogRequest(intent, session, callback) {
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
 		var note = intent.slots.utteredNote.value;
-        var url = tuner_url_dict[note];
+        var url = "'" + tuner_url_dict[note] + "'"; // quotes for later
         var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
-                + "<audio src=\"" + url + "\"> <break time='1s'/> <audio src=\"" + url + "\"> </speak>";
+                + "<audio src=" + url + " /> <break time='1s'/> <audio src=" + url + " /> </speak>";
+
+        console.log(str);
         //speechOutput = {
         //    "type": "SSML",
         //    "ssml": "<speak>hello</speak>"
@@ -530,7 +532,7 @@ function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSess
 function buildSSMLResponse(title, output, repromptText, shouldEndSession) {
     return {
         outputSpeech: {
-            type: "ssml"
+            type: "ssml",
             ssml: output
         },
         card: {

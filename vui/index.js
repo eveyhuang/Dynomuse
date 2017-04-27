@@ -311,7 +311,7 @@ function handleTuningDialogRequest(intent, session, callback) {
         var url = "'" + tuner_url_dict[note.toLowerCase()] + "'"; // quotes for later
         var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='1s'/>"
                 + "<audio src=" + url + " /> <break time='1s'/> <audio src=" + url + " /> </speak>";
-        var out = "Here is " + note + "key!";
+        var out = "Here is " + note + " key!";
 
         callback(session.attributes,
             buildSSMLResponse(CARD_TITLE, str, out, false));

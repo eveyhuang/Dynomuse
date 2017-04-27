@@ -77,9 +77,8 @@ exports.handler = function (event, context) {
             onSessionStarted({requestId: event.request.requestId}, event.session);
         }
 
-        if (event.request.type === "AudioPlayer.PlaybackNearlyFinished" && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl) {
-            repeatMetronomeDirective(event.session.attributes.metronomeUrl, metronome_token);
-        } else if (event.request.type === "LaunchRequest") {
+        // re add  && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl ?
+        if (event.request.type === "LaunchRequest") {
             onLaunch(event.request,
                 event.session,
                 function callback(sessionAttributes, speechletResponse) {
@@ -427,16 +426,16 @@ function handleMetronomeRequest(intent, session, callback) {
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("AMAZON.PauseIntent" === intent.name) {
-        speechOutput = "Stopping the metronome.";
+        speechOutput = "Stopping the metronome. What else do you want to do?";
         callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null, null));
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "stop", null, null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
         speechOutput = "Beginning the metronome.";
-        var url = metronome_url_dict["default"];
-        session.attributes.metronomeUrl = url;
-        callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "play", "REPLACE_ALL", url, metronome_token, null, 0));
+        session.attributes.metronomeUrl = metronome_url_dict["default"];
+        callback(session.attributes,        
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "play", "REPLACE_ALL", session.attributes.metronomeUrl, metronome_token, null, 0));
+        callback(session.attributes, test);
     } else {
         speechOutput = "I do not support that action.";
     }

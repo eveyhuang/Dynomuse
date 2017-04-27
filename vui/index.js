@@ -428,13 +428,13 @@ function handleMetronomeRequest(intent, session, callback) {
     } else if ("AMAZON.PauseIntent" === intent.name) {
         speechOutput = "Stopping the metronome. What else do you want to do?";
         callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "stop", null, null, null, null, null));
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
         speechOutput = "Beginning the metronome.";
         session.attributes.metronomeUrl = metronome_url_dict["default"];
         callback(session.attributes,        
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "play", "REPLACE_ALL", session.attributes.metronomeUrl, metronome_token, null, 0));
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", session.attributes.metronomeUrl, metronome_token, null, 0));
         callback(session.attributes, test);
     } else {
         speechOutput = "I do not support that action.";

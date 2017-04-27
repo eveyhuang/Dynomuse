@@ -95,6 +95,7 @@ public class MetronomeActivity extends AppCompatActivity {
         currentBeat.setTextColor(Color.GREEN);
 
         Spinner beatSpinner = (Spinner) findViewById(R.id.beatspinner);
+
         ArrayAdapter<Beats> arrayBeats =
                 new ArrayAdapter<Beats>(this,
                         android.R.layout.simple_spinner_item, Beats.values());

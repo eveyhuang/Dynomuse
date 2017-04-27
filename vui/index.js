@@ -294,7 +294,7 @@ function handleTuningDialogRequest(intent, session, callback) {
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
 		var note = intent.slots.utteredNote.value;
-        var url = "'" + tuner_url_dict[note] + "'"; // quotes for later
+        var url = "'" + tuner_url_dict[note.toLowerCase()] + "'"; // quotes for later
         var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
                 + "<audio src=" + url + " /> <break time='1s'/> <audio src=" + url + " /> </speak>";
 
@@ -336,9 +336,10 @@ function handleRecordingListRequest(intent, session, callback) {
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
 	} else {
-        if ("SelectTaskIntent" === intent.name && (intent.slots.utteredTask.value === "record" || intent.slots.utteredTask.value === "recording")) {
+        if ("SelectTaskIntent" === intent.name) {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
-            session.attributes.isRecordingList = true;
+            callback(session.attributes,
+                buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
         } else {
             if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
                 var numRec = recordings.length;
@@ -360,24 +361,31 @@ function handleRecordingListRequest(intent, session, callback) {
                     listOfRecordings = listOfRecordings.substring(0, listOfRecordings.length - 2);
                     speechOutput = "I found " + numRec + " recording" + plural + ". They are: " + listOfRecordings + ".";
                 }
+                callback(session.attributes,
+                    buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
             } else if ("SelectRecIntent" === intent.name) {
                 var rec = intent.slots.utteredRec.value;
                 var recording = recordings[rec.toLowerCase()];
 				if (recording) {
 					//play the recording they said to
-                    speechOutput = {
-                        type: "SSML",
-                        ssml: "<speak><audio src=\"" + recording + "\"></speak>"
-                    };
+                    recording = "'" + recording + "'";
+                    speechOutput = "<speak><audio src=" + recording + "/></speak>";
+                    callback(session.attributes,
+                        buildSSSMLResponse(CARD_TITLE, speechOutput, "Here is the recording!", false));
 				} else {
                     speechOutput = "I could not find the recording titled " + rec.toLowerCase() + ".";
+
+                    callback(session.attributes,
+                        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
                 }
-			}
+			} else {
+                speechOutput = "I did not understand what you wanted to do.";
+
+                callback(session.attributes,
+                    buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+            }
         }
     }
-
-    callback(session.attributes,
-        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
 
 function handleMetronomeRequest(intent, session, callback) {
@@ -532,7 +540,7 @@ function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSess
 function buildSSMLResponse(title, output, repromptText, shouldEndSession) {
     return {
         outputSpeech: {
-            type: "ssml",
+            type: "SSML",
             ssml: output
         },
         card: {

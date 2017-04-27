@@ -295,18 +295,12 @@ function handleTuningDialogRequest(intent, session, callback) {
         // Jump right into that particular note
 		var note = intent.slots.utteredNote.value;
         var url = "'" + tuner_url_dict[note.toLowerCase()] + "'"; // quotes for later
-        var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
+        var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='1s'/>"
                 + "<audio src=" + url + " /> <break time='1s'/> <audio src=" + url + " /> </speak>";
-
-        console.log(str);
-        //speechOutput = {
-        //    "type": "SSML",
-        //    "ssml": "<speak>hello</speak>"
-        //}
-			//add notes into speechOutput with SSML
+        var out = "Here is " + note + "key!";
 
         callback(session.attributes,
-            buildSSMLResponse(CARD_TITLE, str, "Here is the note!", false));
+            buildSSMLResponse(CARD_TITLE, str, out, false));
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the tuner! What note would you like to hear?"
         callback(session.attributes,

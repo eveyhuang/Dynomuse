@@ -202,7 +202,7 @@ function handleBlankRequest(callback) { //Could have specific hints for blank re
     }
 
 function handlePauseRequest(intent, session, callback) {
-    var speechOutput = "Stopping the metronome. What else do you want to do?";
+    var speechOutput = "Stopping all currently playing audio or metronome. What else do you want to do?";
     callback(session.attributes,
         buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "stop", null, null, null, null, null));
 }

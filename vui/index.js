@@ -287,10 +287,11 @@ function handleTuningDialogRequest(intent, session, callback) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
 
-
 		delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
+
+        getWelcomeResponse(callback);
 
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
@@ -330,6 +331,8 @@ function handleRecordingListRequest(intent, session, callback) {
         delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
+
+        getWelcomeResponse(callback)
 	} else {
         if ("SelectTaskIntent" === intent.name) {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
@@ -400,6 +403,8 @@ function handleMetronomeRequest(intent, session, callback) {
         delete session.attributes.isTuning;
         delete session.attributes.isRecording;
         delete session.attributes.metronomeUrl;
+
+        getWelcomeResponse(callback)
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
         callback(session.attributes,

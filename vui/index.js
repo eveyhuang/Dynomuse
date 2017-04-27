@@ -8,30 +8,35 @@ const dynamo = new doc.DynamoDB();
 
 var recordings = {};
 
+// Tokens for later
+var metronome_token = "pizza";
+var metronome_high = "high_note";
+var metronome_low = "low_note";
+
 // Way to make it dry: get the base url and append the string associated + .mp3
 var tuner_url_dict = {
-    "A flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
-    "A": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/A4.mp3",
-    "A sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
-    "B flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
-    "B": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/B4.mp3",
-    "C": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
-    "C sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
-    "D flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Csharp4.mp3",
-    "D": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/D4.mp3",
-    "D sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
-    "E flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
-    "E": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/E4.mp3",
-    "F": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/F4.mp3",
-    "F sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
-    "G flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
-    "G": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/G4.mp3",
-    "G sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
+    "a flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
+    "a": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/A4.mp3",
+    "a sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
+    "b flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Asharp4.mp3",
+    "b": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/B4.mp3",
+    "c": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
+    "c sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/C4.mp3",
+    "d flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Csharp4.mp3",
+    "d": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/D4.mp3",
+    "d sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
+    "e flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Dsharp4.mp3",
+    "e": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/E4.mp3",
+    "f": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/F4.mp3",
+    "f sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
+    "g flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Fsharp4.mp3",
+    "g": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/G4.mp3",
+    "g sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
 };
 
 // hard coding the beats for now, not worrying about "up"
 var metronome_url_dict = {
-    "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4.mp3",
+    "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4-hold.mp3",
 };
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
@@ -64,6 +69,7 @@ exports.handler = function (event, context) {
                 recordings_dict[name] = item;
             }
         });*/
+        // strip extensions, title is marked as if it had no extension
         recordings["piano"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/piano.mp3";
         recordings["sax"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/sax.mp3";
 
@@ -71,9 +77,8 @@ exports.handler = function (event, context) {
             onSessionStarted({requestId: event.request.requestId}, event.session);
         }
 
-        if (event.request.type === "AudioPlayer.PlaybackNearlyFinished" && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl) {
-            repeatMetronomeDirective(event.session.attributes.metronomeUrl, "sample-token");
-        } else if (event.request.type === "LaunchRequest") {
+        // re add  && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl ?
+        if (event.request.type === "LaunchRequest") {
             onLaunch(event.request,
                 event.session,
                 function callback(sessionAttributes, speechletResponse) {
@@ -168,7 +173,7 @@ var CARD_TITLE = "Dyno Muse";
 
 function getWelcomeResponse(callback) {
     var sessionAttributes = {},
-        speechOutput = "Welcome to Dyno Muse, what you would you like to do?",
+        speechOutput = "Welcome to Dyno Muse, what would you like to do?",
         shouldEndSession = false,
         repromptText = "What else can I help you with?";
 
@@ -224,7 +229,7 @@ function handleMainMenuRequest(intent, session, callback) {
 			handleRecordingListRequest(intent, session, callback);
 		} else {
 		    var reprompt = session.attributes.repromptText,
-            speechOutput = "I'm sorry, I couldn't understand you. You can start the metronome, tuner, or look at your recordings." + reprompt;
+            speechOutput = "I'm sorry, I couldn't understand you. You can start the metronome, tuner, or look at your recordings. " + reprompt;
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 		}
@@ -286,35 +291,32 @@ function handleTuningDialogRequest(intent, session, callback) {
         // Back out into the main menu
         speechOutput += session.attributes.speechOutput;
 
-
 		delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
 
+        getWelcomeResponse(callback);
+
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
 		var note = intent.slots.utteredNote.value;
-        var url = tuner_url_dict[note];
-        var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
-                + "<audio src=\"" + url + "\"> <break time='1s'/> <audio src=\"" + url + "\"> </speak>";
-        speechOutput = {
-            type: "SSML",
-            ssml: str
-        }
-			//add notes into speechOutput with SSML
+        var url = "'" + tuner_url_dict[note.toLowerCase()] + "'"; // quotes for later
+        var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='1s'/>"
+                + "<audio src=" + url + " /> <break time='1s'/> <audio src=" + url + " /> </speak>";
+        var out = "Here is " + note + "key!";
 
+        callback(session.attributes,
+            buildSSMLResponse(CARD_TITLE, str, out, false));
     } else if ("SelectTaskIntent" === intent.name) {
         speechOutput += "Welcome to the tuner! What note would you like to hear?"
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else { //might not necessarily have to be reprompt
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 	}
-
-
-    callback(session.attributes,
-        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
 
 function handleRecordingListRequest(intent, session, callback) {
@@ -333,49 +335,59 @@ function handleRecordingListRequest(intent, session, callback) {
         delete session.attributes.isMetronome;
 		delete session.attributes.isTuning;
 		delete session.attributes.isRecording;
+
+        getWelcomeResponse(callback)
 	} else {
-        if ("SelectTaskIntent" === intent.name && (intent.slots.utteredTask.value === "record" || intent.slots.utteredTask.value === "recording")) {
+        if ("SelectTaskIntent" === intent.name) {
             speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
-            session.attributes.isRecordingList = true;
+            callback(session.attributes,
+                buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
         } else {
             if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
-                var numRec = recordings.length;
+                var numRec = 0;
+                var listOfRecordings = "";
+                    for (var key in recordings) {
+                        numRec += 1;
+                        listOfRecordings += key;
+                        listOfRecordings += ", ";
+                    }
                 if (numRec == 0) {
                     speechOutput = "I did not find any recordings. Have you recorded some recently?";
                 }
                 else {
-                     if (numRec == 1) {
-                        plural = "s";
-                    } else {
+                    var plural = "s"
+                    if (numRec == 1) {
                         plural = "";
                     }
                     // Hacky way of parsing through recordings and feeding into a string
-                    var listOfRecordings = "";
-                    for (var key in recordings) {
-                        listOfRecordings += key;
-                        listOfRecordings += ", ";
-                    }
                     listOfRecordings = listOfRecordings.substring(0, listOfRecordings.length - 2);
                     speechOutput = "I found " + numRec + " recording" + plural + ". They are: " + listOfRecordings + ".";
                 }
+                callback(session.attributes,
+                    buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
             } else if ("SelectRecIntent" === intent.name) {
                 var rec = intent.slots.utteredRec.value;
                 var recording = recordings[rec.toLowerCase()];
 				if (recording) {
 					//play the recording they said to
-                    speechOutput = {
-                        type: "SSML",
-                        ssml: "<speak><audio src=\"" + recording + "\"></speak>"
-                    };
+                    recording = "'" + recording + "'";
+                    speechOutput = "<speak><audio src=" + recording + "/></speak>";
+                    callback(session.attributes,
+                        buildSSMLResponse(CARD_TITLE, speechOutput, "Here is the recording!", false));
 				} else {
                     speechOutput = "I could not find the recording titled " + rec.toLowerCase() + ".";
+
+                    callback(session.attributes,
+                        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
                 }
-			}
+			} else {
+                speechOutput = "I did not understand what you wanted to do.";
+
+                callback(session.attributes,
+                    buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+            }
         }
     }
-
-    callback(session.attributes,
-        buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
 }
 
 function handleMetronomeRequest(intent, session, callback) {
@@ -395,8 +407,10 @@ function handleMetronomeRequest(intent, session, callback) {
         delete session.attributes.isTuning;
         delete session.attributes.isRecording;
         delete session.attributes.metronomeUrl;
+
+        getWelcomeResponse(callback)
     } else if ("SelectTaskIntent" === intent.name) {
-        speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
+        speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature. To begin, say 'resume'.";
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSpeedIntent" === intent.name) {
@@ -412,16 +426,16 @@ function handleMetronomeRequest(intent, session, callback) {
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("AMAZON.PauseIntent" === intent.name) {
-        speechOutput = "Stopping the metronome.";
+        speechOutput = "Stopping the metronome. What else do you want to do?";
         callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null));
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
         speechOutput = "Beginning the metronome.";
-        url = metronome_url_dict["default"];
-        session.attributes.metronomeUrl = url;
-        callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", url, "pizza", 0));
+        session.attributes.metronomeUrl = metronome_url_dict["default"];
+        callback(session.attributes,        
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", session.attributes.metronomeUrl, metronome_token, null, 0));
+        callback(session.attributes, test);
     } else {
         speechOutput = "I do not support that action.";
     }
@@ -469,7 +483,7 @@ function handleFinishSessionRequest(intent, session, callback) {
 
 // ------- Helper functions to build responses and directives -------
 
-function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds) {
+function buildAudioPlayerDirective(directiveType, behavior, url, token, expectedPreviousToken, offsetInMilliseconds) {
     var audioPlayerDirective;
     if (directiveType === 'play') {
         audioPlayerDirective = {
@@ -479,6 +493,7 @@ function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetIn
                 "stream": {
                     "url": url,
                     "token": token,
+                    "expectedPreviousToken": expectedPreviousToken,
                     "offsetInMilliseconds": offsetInMilliseconds
                 }
             }
@@ -494,18 +509,18 @@ function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetIn
         };
     }
 
-    responseObject.response.directives = [audioPlayerDirective];
+    //responseObject.response.directives = [audioPlayerDirective];
     return audioPlayerDirective;
 }
 
 // "Loop" by repeating what is in the current queue. To be called when the stream is almost done.
 function repeatMetronomeDirective(url, token) {
     return {
-        directives: [buildAudioPlayerDirective("play", "ENQUEUE", url, token, 0)],
+        directives: [buildAudioPlayerDirective("play", "ENQUEUE", url, token, token, 0)],
     };
 }
 
-function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSession, directiveType, behavior, url, token, offsetInMilliseconds) {
+function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSession, directiveType, behavior, url, token, previousToken, offsetInMilliseconds) {
     return {
         outputSpeech: {
             type: "PlainText",
@@ -522,7 +537,28 @@ function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSess
                 text: repromptText
             }
         },
-        directives: [buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds)],
+        directives: [buildAudioPlayerDirective(directiveType, behavior, url, token, previousToken, offsetInMilliseconds)],
+        shouldEndSession: shouldEndSession
+    };
+}
+
+function buildSSMLResponse(title, output, repromptText, shouldEndSession) {
+    return {
+        outputSpeech: {
+            type: "SSML",
+            ssml: output
+        },
+        card: {
+            type: "Simple",
+            title: title,
+            content: repromptText
+        },
+        reprompt: {
+            outputSpeech: {
+                type: "PlainText",
+                text: repromptText
+            }
+        },
         shouldEndSession: shouldEndSession
     };
 }

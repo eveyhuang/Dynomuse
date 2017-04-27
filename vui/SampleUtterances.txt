@@ -12,7 +12,6 @@ SelectNoteIntent key of {utteredNote}
 SelectNoteIntent what is {utteredNote}
 SelectNoteIntent {utteredNote} key
 
-
 SelectSpeedIntent play at {utteredSpeed} b p m
 SelectSpeedIntent play at {utteredSpeed} beats per minute
 SelectSpeedIntent {utteredSpeed} b p m

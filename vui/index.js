@@ -8,6 +8,11 @@ const dynamo = new doc.DynamoDB();
 
 var recordings = {};
 
+// Tokens for later
+var metronome_token = "pizza";
+var metronome_high = "high_note";
+var metronome_low = "low_note";
+
 // Way to make it dry: get the base url and append the string associated + .mp3
 var tuner_url_dict = {
     "a flat": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
@@ -73,7 +78,7 @@ exports.handler = function (event, context) {
         }
 
         if (event.request.type === "AudioPlayer.PlaybackNearlyFinished" && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl) {
-            repeatMetronomeDirective(event.session.attributes.metronomeUrl, "sample-token");
+            repeatMetronomeDirective(event.session.attributes.metronomeUrl, metronome_token);
         } else if (event.request.type === "LaunchRequest") {
             onLaunch(event.request,
                 event.session,
@@ -169,7 +174,7 @@ var CARD_TITLE = "Dyno Muse";
 
 function getWelcomeResponse(callback) {
     var sessionAttributes = {},
-        speechOutput = "Welcome to Dyno Muse, what you would you like to do?",
+        speechOutput = "Welcome to Dyno Muse, what would you like to do?",
         shouldEndSession = false,
         repromptText = "What else can I help you with?";
 
@@ -406,7 +411,7 @@ function handleMetronomeRequest(intent, session, callback) {
 
         getWelcomeResponse(callback)
     } else if ("SelectTaskIntent" === intent.name) {
-        speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
+        speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature. To begin, say 'resume'.";
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSpeedIntent" === intent.name) {
@@ -424,14 +429,14 @@ function handleMetronomeRequest(intent, session, callback) {
     } else if ("AMAZON.PauseIntent" === intent.name) {
         speechOutput = "Stopping the metronome.";
         callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null));
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
         speechOutput = "Beginning the metronome.";
-        url = metronome_url_dict["default"];
+        var url = metronome_url_dict["default"];
         session.attributes.metronomeUrl = url;
         callback(session.attributes,
-            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", url, "pizza", 0));
+            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "play", "REPLACE_ALL", url, metronome_token, null, 0));
     } else {
         speechOutput = "I do not support that action.";
     }
@@ -479,7 +484,7 @@ function handleFinishSessionRequest(intent, session, callback) {
 
 // ------- Helper functions to build responses and directives -------
 
-function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds) {
+function buildAudioPlayerDirective(directiveType, behavior, url, token, expectedPreviousToken, offsetInMilliseconds) {
     var audioPlayerDirective;
     if (directiveType === 'play') {
         audioPlayerDirective = {
@@ -489,6 +494,7 @@ function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetIn
                 "stream": {
                     "url": url,
                     "token": token,
+                    "expectedPreviousToken": expectedPreviousToken,
                     "offsetInMilliseconds": offsetInMilliseconds
                 }
             }
@@ -504,18 +510,18 @@ function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetIn
         };
     }
 
-    responseObject.response.directives = [audioPlayerDirective];
+    //responseObject.response.directives = [audioPlayerDirective];
     return audioPlayerDirective;
 }
 
 // "Loop" by repeating what is in the current queue. To be called when the stream is almost done.
 function repeatMetronomeDirective(url, token) {
     return {
-        directives: [buildAudioPlayerDirective("play", "ENQUEUE", url, token, 0)],
+        directives: [buildAudioPlayerDirective("play", "ENQUEUE", url, token, token, 0)],
     };
 }
 
-function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSession, directiveType, behavior, url, token, offsetInMilliseconds) {
+function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSession, directiveType, behavior, url, token, previousToken, offsetInMilliseconds) {
     return {
         outputSpeech: {
             type: "PlainText",
@@ -532,7 +538,7 @@ function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSess
                 text: repromptText
             }
         },
-        directives: [buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds)],
+        directives: [buildAudioPlayerDirective(directiveType, behavior, url, token, previousToken, offsetInMilliseconds)],
         shouldEndSession: shouldEndSession
     };
 }

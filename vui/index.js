@@ -36,7 +36,7 @@ var tuner_url_dict = {
 
 // hard coding the beats for now, not worrying about "up"
 var metronome_url_dict = {
-    "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4.mp3",
+    "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4-hold.mp3",
 };
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
@@ -229,7 +229,7 @@ function handleMainMenuRequest(intent, session, callback) {
 			handleRecordingListRequest(intent, session, callback);
 		} else {
 		    var reprompt = session.attributes.repromptText,
-            speechOutput = "I'm sorry, I couldn't understand you. You can start the metronome, tuner, or look at your recordings." + reprompt;
+            speechOutput = "I'm sorry, I couldn't understand you. You can start the metronome, tuner, or look at your recordings. " + reprompt;
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 		}

@@ -31,6 +31,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+//https://github.com/MasterEx/BeatKeeper is source of most of this code
 
 public class MetronomeActivity extends AppCompatActivity {
 
@@ -245,6 +246,7 @@ public class MetronomeActivity extends AppCompatActivity {
             TextView timeSignature = (TextView) findViewById(R.id.timesignature);
             timeSignature.setText(""+beat+"/"+noteValue);
             metroTask.setBeat(beat.getNum());
+            beats = beat.getNum();
         }
 
         @Override

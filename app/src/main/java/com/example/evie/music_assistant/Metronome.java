@@ -3,6 +3,7 @@ package com.example.evie.music_assistant;
 import android.os.Message;
 import android.os.Handler;
 
+//https://github.com/MasterEx/BeatKeeper is source of most of this code
 
 /**
  * Created by Harry on 4/24/2017.

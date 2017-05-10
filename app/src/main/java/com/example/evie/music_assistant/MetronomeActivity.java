@@ -97,6 +97,7 @@ public class MetronomeActivity extends AppCompatActivity {
 
         Spinner beatSpinner = (Spinner) findViewById(R.id.beatspinner);
 
+
         ArrayAdapter<Beats> arrayBeats =
                 new ArrayAdapter<Beats>(this,
                         android.R.layout.simple_spinner_item, Beats.values());
@@ -113,9 +114,21 @@ public class MetronomeActivity extends AppCompatActivity {
         noteValues.setDropDownViewResource(R.layout.spinner_dropdown);
         noteValuesdSpinner.setOnItemSelectedListener(noteValueSpinnerListener);
 
+        Spinner metronomeBpmSpinner = (Spinner) findViewById(R.id.metrospinner);
+        Short[] bpmArr = new Short[maxBpm - minBpm + 1];
+        for (short i = minBpm; i <= maxBpm; i += 1) {
+            bpmArr[i - minBpm] = i;
+        }
+        ArrayAdapter<Short> bpmVals =
+                new ArrayAdapter<Short>(this, android.R.layout.simple_spinner_item, bpmArr);
+        metronomeBpmSpinner.setAdapter(bpmVals);
+         bpmVals.setDropDownViewResource(R.layout.spinner_dropdown);
+        metronomeBpmSpinner.setOnItemSelectedListener(MetronomeSpinnerListener);
         audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-        initialVolume = (short) audio.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+
+                initialVolume = (short) audio.getStreamVolume(AudioManager.STREAM_MUSIC);
         volume = initialVolume;
 
         SeekBar volumebar = (SeekBar) findViewById(R.id.volumebar);
@@ -276,6 +289,25 @@ public class MetronomeActivity extends AppCompatActivity {
 
     };
 
+    private OnItemSelectedListener MetronomeSpinnerListener = new OnItemSelectedListener() {
+
+        @Override
+        public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2,
+                                   long arg3) {
+            // TODO Auto-generated method stub
+            short curr = (short) arg0.getItemAtPosition(arg2);
+            TextView bps = (TextView) findViewById(R.id.bps);
+            bpm = curr;
+            bps.setText(""+bpm);
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> arg0) {
+            // TODO Auto-generated method stub
+
+        }
+
+    };
     @Override
     public boolean onKeyUp(int keycode, KeyEvent e) {
         SeekBar volumebar = (SeekBar) findViewById(R.id.volumebar);

@@ -25,6 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp">
 
+
         <TextView
             android:id="@+id/bps"
             android:layout_width="0px"
@@ -66,8 +67,8 @@
         android:layout_width="match_parent"
         android:layout_height="218dp"
         android:gravity="center|bottom"
-        android:layout_marginTop="466dp"
-        android:layout_below="@+id/linearLayout1"
+        android:layout_marginTop="1dp"
+        android:layout_below="@+id/linearLayout5"
         android:layout_alignParentStart="true">
 
         <Button
@@ -111,13 +112,33 @@
         android:layout_below="@+id/linearLayout1"
         android:layout_centerHorizontal="true" />
 
+
+    <LinearLayout
+        android:id="@+id/linearLayout5"
+        android:layout_width="300dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="42dp"
+        android:layout_below="@+id/volumebar"
+        android:layout_alignParentStart="true">
+
+        <Spinner
+            android:id="@+id/metrospinner"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textSize="80sp"
+            android:layout_weight="1"
+            android:gravity="center" />
+
+
+    </LinearLayout>
+
     <LinearLayout
         android:id="@+id/linearLayout3"
         android:layout_width="300dp"
         android:layout_marginTop="42dp"
         android:layout_height="200dp"
         android:layout_below="@+id/volumebar"
-        android:layout_centerHorizontal="true">
+        android:layout_alignParentEnd="true">
 
         <Spinner
             android:id="@+id/beatspinner"
@@ -142,6 +163,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"/>
+
 
     </LinearLayout>
 

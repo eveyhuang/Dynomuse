@@ -122,8 +122,10 @@ public class MetronomeActivity extends AppCompatActivity {
         ArrayAdapter<Short> bpmVals =
                 new ArrayAdapter<Short>(this, android.R.layout.simple_spinner_item, bpmArr);
         metronomeBpmSpinner.setAdapter(bpmVals);
-         bpmVals.setDropDownViewResource(R.layout.spinner_dropdown);
+        bpmVals.setDropDownViewResource(R.layout.spinner_dropdown);
         metronomeBpmSpinner.setOnItemSelectedListener(MetronomeSpinnerListener);
+        metronomeBpmSpinner.setSelection(60);
+
         audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
 
@@ -168,11 +170,15 @@ public class MetronomeActivity extends AppCompatActivity {
     }
 
     public void onPlusClick(View view) {
-        bpm++;
-        TextView bpmText = (TextView) findViewById(R.id.bps);
-        bpmText.setText(""+bpm);
-        metroTask.setBpm(bpm);
-        maxBpmGuard();
+        if(!(bpm >= maxBpm)) {
+            bpm++;
+            TextView bpmText = (TextView) findViewById(R.id.bps);
+            bpmText.setText("" + bpm);
+            metroTask.setBpm(bpm);
+            maxBpmGuard();
+            Spinner metroSpinner = (Spinner) findViewById(R.id.metrospinner);
+            metroSpinner.setSelection(((ArrayAdapter<Short>) metroSpinner.getAdapter()).getPosition(bpm));
+        }
     }
 
     private OnLongClickListener plusListener = new OnLongClickListener() {
@@ -202,11 +208,15 @@ public class MetronomeActivity extends AppCompatActivity {
     }
 
     public void onMinusClick(View view) {
-        bpm--;
-        TextView bpmText = (TextView) findViewById(R.id.bps);
-        bpmText.setText(""+bpm);
-        metroTask.setBpm(bpm);
-        minBpmGuard();
+        if (!(bpm <= minBpm)) {
+            bpm--;
+            TextView bpmText = (TextView) findViewById(R.id.bps);
+            bpmText.setText("" + bpm);
+            metroTask.setBpm(bpm);
+            minBpmGuard();
+            Spinner metroSpinner = (Spinner) findViewById(R.id.metrospinner);
+            metroSpinner.setSelection(((ArrayAdapter<Short>) metroSpinner.getAdapter()).getPosition(bpm));
+        }
     }
 
     private OnLongClickListener minusListener = new OnLongClickListener() {

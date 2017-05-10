@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/spinnerTarget"
-<<<<<<< HEAD
     android:layout_width="300dp"
     android:layout_height="300dp"
     android:textSize="50pt"
-=======
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:textSize="30pt"
->>>>>>> 0acd9b8cedee16a86f0d1718708db91a9ef5daf5
     android:textColor="@color/text"
     android:gravity="center"/>

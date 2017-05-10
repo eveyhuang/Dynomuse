@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_height="70dip"
+        android:padding="6dip"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="50dp"
+        android:layout_width="450dip">
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="6dip"
+            android:contentDescription="TODO"
+            android:src="@drawable/music" />
+
+        <TextView
+            android:id="@+id/secondLine"
+            android:layout_width="fill_parent"
+            android:layout_height="26dip"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_toRightOf="@id/icon"
+            android:ellipsize="marquee"
+            android:layout_marginLeft="15dp"
+            android:maxLines="1"
+            android:text="05/07/2017 -- 05:15"
+            android:textColor="@color/text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/firstLine"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/secondLine"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignWithParentIfMissing="true"
+            android:layout_toRightOf="@id/icon"
+            android:gravity="center_vertical"
+            android:textColor="@color/text"
+            android:layout_marginLeft="15dp"
+            android:text="Rolling in the Deep"
+            android:textSize="25sp" />
+
+    </RelativeLayout>
+    />
+
+    <RelativeLayout
+        android:layout_height="70dip"
+        android:padding="6dip"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="450dip"
+        android:layout_marginTop="30dp">
+
+        <ImageView
+            android:id="@+id/icon2"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="6dip"
+            android:contentDescription="TODO"
+            android:src="@drawable/music" />
+
+        <TextView
+            android:id="@+id/firstLine2"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignWithParentIfMissing="true"
+            android:gravity="center_vertical"
+            android:layout_marginLeft="15dp"
+            android:text="Hit Song No 1"
+            android:textColor="@color/text"
+            android:textSize="25sp"
+            android:layout_alignParentTop="true"
+            android:layout_toEndOf="@+id/icon2" />
+
+        <TextView
+            android:id="@+id/secondLine2"
+            android:layout_width="fill_parent"
+            android:layout_height="26dip"
+            android:ellipsize="marquee"
+            android:layout_marginLeft="15dp"
+            android:maxLines="1"
+            android:textColor="@color/text"
+            android:text="05/11/2017 -- 03:24"
+            android:textSize="15sp"
+            android:layout_alignParentBottom="true"
+            android:layout_toEndOf="@+id/icon2" />
+
+    </RelativeLayout>
+    />
+
+    <RelativeLayout
+        android:layout_height="70dip"
+        android:padding="6dip"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30dp"
+        android:layout_width="450dip">
+
+        <ImageView
+            android:id="@+id/icon3"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="6dip"
+            android:contentDescription="TODO"
+            android:src="@drawable/music" />
+
+        <TextView
+            android:id="@+id/secondLine3"
+            android:layout_width="fill_parent"
+            android:layout_height="26dip"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_toRightOf="@id/icon3"
+            android:ellipsize="marquee"
+            android:layout_marginLeft="15dp"
+            android:maxLines="1"
+            android:textColor="@color/text"
+            android:text="05/15/2017 -- 06:01"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/firstLine3"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignWithParentIfMissing="true"
+            android:gravity="center_vertical"
+            android:layout_marginLeft="15dp"
+            android:text="Chopin Nocturnes"
+            android:textColor="@color/text"
+            android:textSize="25sp"
+            android:layout_alignParentTop="true"
+            android:layout_toEndOf="@+id/icon3" />
+
+    </RelativeLayout>
+    />
+</LinearLayout>

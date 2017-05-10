@@ -75,8 +75,9 @@ public class Record extends AppCompatActivity {
         timerTextView = (TextView) findViewById(R.id.timerTextView);
     }
 
-    private void goToRecordList(View view) {
-
+    public void goToRecordList(View view) {
+        Intent recordListIntent = new Intent(this, RecordList.class);
+        startActivity(recordListIntent);
     }
 
 

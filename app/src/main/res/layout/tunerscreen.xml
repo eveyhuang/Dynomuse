@@ -7,7 +7,7 @@
         android:id="@+id/choose"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:gravity="center_horizontal|center_vertical"
+        android:gravity="center|center_vertical"
         android:text="Choose a note:"
         android:textSize="40dp"
         android:textColor="@color/text"/>
@@ -15,14 +15,14 @@
     <Spinner
         android:id="@+id/notes_spinner"
         android:layout_gravity="center_horizontal"
-        android:layout_width="100dp"
-        android:textSize="30dp"
-        android:layout_height="100dp" />
-
+        android:layout_width="300dp"
+        android:layout_height="300dp" />
     <Button
         android:id="@+id/playbutton"
-        android:layout_gravity="bottom|center_horizontal"
+        android:layout_below="@+id/notes_spinner"
+        android:layout_gravity="center"
         android:drawableTop="@drawable/play"
+        android:onClick="playNote"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"

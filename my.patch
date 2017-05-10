@@ -1,0 +1,1566 @@
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+index fe72da5..0e23f8e 100644
+--- a/.idea/gradle.xml
++++ b/.idea/gradle.xml
+@@ -5,7 +5,7 @@
+       <GradleProjectSettings>
+         <option name="distributionType" value="LOCAL" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+-        <option name="gradleHome" value="C:\Program Files\Android\Android Studio\gradle\gradle-2.14.1" />
++        <option name="gradleHome" value="$APPLICATION_HOME_DIR$/gradle/gradle-2.14.1" />
+         <option name="modules">
+           <set>
+             <option value="$PROJECT_DIR$" />
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+index a8e9617..9ee0acd 100644
+--- a/.idea/modules.xml
++++ b/.idea/modules.xml
+@@ -3,6 +3,7 @@
+   <component name="ProjectModuleManager">
+     <modules>
+       <module fileurl="file://$PROJECT_DIR$/Music-Assistant.iml" filepath="$PROJECT_DIR$/Music-Assistant.iml" />
++      <module fileurl="file://$PROJECT_DIR$/Music-Assistant-KillMe.iml" filepath="$PROJECT_DIR$/Music-Assistant-KillMe.iml" />
+       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+     </modules>
+   </component>
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+deleted file mode 100644
+index 94a25f7..0000000
+--- a/.idea/vcs.xml
++++ /dev/null
+@@ -1,6 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="VcsDirectoryMappings">
+-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+-  </component>
+-</project>
+\ No newline at end of file
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 4d82292..2c34bc1 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -1,13 +1,19 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+     package="com.example.evie.music_assistant">
++    <uses-permission android:name="android.permission.RECORD_AUDIO"></uses-permission>
++    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+ 
+     <application
+         android:allowBackup="true"
+         android:icon="@mipmap/ic_launcher"
+         android:label="@string/app_name"
+         android:supportsRtl="true"
+-        android:theme="@style/AppTheme">
++        android:theme="@style/AppTheme"
++        android:statusBarColor="@color/bar">
++
++
+         <activity android:name=".MainActivity">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+diff --git a/app/src/main/java/com/example/evie/music_assistant/MainActivity.java b/app/src/main/java/com/example/evie/music_assistant/MainActivity.java
+index 996cb36..3dd7632 100644
+--- a/app/src/main/java/com/example/evie/music_assistant/MainActivity.java
++++ b/app/src/main/java/com/example/evie/music_assistant/MainActivity.java
+@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
+     }
+ 
+     public void goToRecord(View view) {
+-        Intent recordIntent = new Intent(this, MetronomeActivity.class);
++        Intent recordIntent = new Intent(this, Record.class);
+         startActivity(recordIntent);
+     }
+ }
+diff --git a/app/src/main/java/com/example/evie/music_assistant/MetronomeActivity.java b/app/src/main/java/com/example/evie/music_assistant/MetronomeActivity.java
+index c458665..5371859 100644
+--- a/app/src/main/java/com/example/evie/music_assistant/MetronomeActivity.java
++++ b/app/src/main/java/com/example/evie/music_assistant/MetronomeActivity.java
+@@ -95,6 +95,7 @@ public class MetronomeActivity extends AppCompatActivity {
+         currentBeat.setTextColor(Color.GREEN);
+ 
+         Spinner beatSpinner = (Spinner) findViewById(R.id.beatspinner);
++
+         ArrayAdapter<Beats> arrayBeats =
+                 new ArrayAdapter<Beats>(this,
+                         android.R.layout.simple_spinner_item, Beats.values());
+diff --git a/app/src/main/java/com/example/evie/music_assistant/Record.java b/app/src/main/java/com/example/evie/music_assistant/Record.java
+index 0694e3f..61f9934 100644
+--- a/app/src/main/java/com/example/evie/music_assistant/Record.java
++++ b/app/src/main/java/com/example/evie/music_assistant/Record.java
+@@ -1,7 +1,13 @@
+ package com.example.evie.music_assistant;
+ 
++import android.media.AudioFormat;
++import android.media.AudioRecord;
++import android.media.MediaRecorder;
++import android.os.Environment;
++import android.os.Handler;
+ import android.support.v7.app.AppCompatActivity;
+ import android.os.Bundle;
++import android.util.Log;
+ import android.view.*;
+ import android.content.*;
+ import android.widget.*;
+@@ -9,12 +15,161 @@ import android.widget.*;
+ import android.support.v7.app.AppCompatActivity;
+ import android.os.Bundle;
+ 
++import java.io.FileNotFoundException;
++import java.io.FileOutputStream;
++import java.io.IOException;
++
+ public class Record extends AppCompatActivity {
++    private static final int RECORDER_SAMPLERATE = 8000;
++    private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
++    private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
++    private AudioRecord recorder = null;
++    private Thread recordingThread = null;
++    private boolean isRecording = false;
++    private int bufferSizeInBytes;
++    private int bufferSize;
++    private ImageButton startButton,stopButton;
++
++    TextView timerTextView;
++    long startTime = 0;
++
++    //runs without a timer by reposting this handler at the end of the runnable
++    Handler timerHandler = new Handler();
++    Runnable timerRunnable = new Runnable() {
++
++        @Override
++        public void run() {
++            long millis = System.currentTimeMillis() - startTime;
++            int seconds = (int) (millis / 1000);
++            int minutes = seconds / 60;
++            seconds = seconds % 60;
++
++            timerTextView.setText(String.format("%d:%02d", minutes, seconds));
++
++            timerHandler.postDelayed(this, 500);
++        }
++    };
++
+ 
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
++        setTitle("Record");
+         setContentView(R.layout.recordscreen);
++        startButton = (ImageButton) findViewById (R.id.imageButton2);
++        stopButton = (ImageButton)  findViewById (R.id.imageButton5);
++
++        //startButton.setOnClickListener (startListener);
++        stopButton.setOnClickListener (stopListener);
++
++        bufferSize = AudioRecord.getMinBufferSize(44100,
++                AudioFormat.CHANNEL_IN_MONO,
++                AudioFormat.ENCODING_PCM_16BIT);
++
++        recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
++                44100,
++                AudioFormat.CHANNEL_IN_MONO,
++                AudioFormat.ENCODING_PCM_16BIT,
++                bufferSize);
++
++        timerTextView = (TextView) findViewById(R.id.timerTextView);
++    }
++
++    private void goToRecordList(View view) {
++
+     }
+ 
++
++
++    int BufferElements2Rec = 1024; // want to play 2048 (2K) since 2 bytes we use only 1024
++    int BytesPerElement = 2; // 2 bytes in 16bit format
++
++
++    public void startRecording(View view){
++
++       // AudioRecord recorder = findAudioRecord();
++        if (recorder==null & isRecording == false){
++            recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
++                    44100,
++                    AudioFormat.CHANNEL_IN_MONO,
++                    AudioFormat.ENCODING_PCM_16BIT,
++                    bufferSize);
++        }
++
++        recorder.startRecording();
++        isRecording = true;
++        startTime = System.currentTimeMillis();
++        timerHandler.postDelayed(timerRunnable, 0);
++
++        recordingThread = new Thread(new Runnable() {
++            public void run() {
++                String filePath = Environment.getExternalStorageDirectory().getPath();
++                short sData[] = new short[BufferElements2Rec];
++
++                FileOutputStream os = null;
++                try {
++                    os = new FileOutputStream(filePath+"/record.pcm");
++                } catch (FileNotFoundException e) {
++                    e.printStackTrace();
++                }
++
++                while (isRecording) {
++                    // gets the voice output from microphone to byte format
++
++                    recorder.read(sData, 0, BufferElements2Rec);
++                    System.out.println("Short wirting to file" + sData.toString() + " at " + filePath);
++                    try {
++                        // // writes the data to file from buffer
++                        // // stores the voice buffer
++                        byte bData[] = short2byte(sData);
++                        os.write(bData, 0, BufferElements2Rec * BytesPerElement);
++                    } catch (IOException e) {
++                        e.printStackTrace();
++                    }
++                }
++                try {
++                    os.close();
++                } catch (IOException e) {
++                    e.printStackTrace();
++                }
++
++            }
++        }, "AudioRecorder Thread");
++        recordingThread.start();
++
++    }
++
++
++    //convert short to byte
++    public byte[] short2byte(short[] sData) {
++        int shortArrsize = sData.length;
++        byte[] bytes = new byte[shortArrsize * 2];
++        for (int i = 0; i < shortArrsize; i++) {
++            bytes[i * 2] = (byte) (sData[i] & 0x00FF);
++            bytes[(i * 2) + 1] = (byte) (sData[i] >> 8);
++            sData[i] = 0;
++        }
++        return bytes;
++    }
++
++    private final View.OnClickListener stopListener = new View.OnClickListener() {
++        @Override
++        public void onClick(View view) {
++            if (null != recorder) {
++                isRecording = false;
++                recorder.stop();
++                recorder.release();
++                recorder = null;
++                recordingThread = null;
++                timerHandler.removeCallbacks(timerRunnable);
++                System.out.println("Recorder released");
++                EditText et=(EditText)findViewById(R.id.editText2);
++                et.setVisibility(View.VISIBLE);
++            }
++
++        }
++
++    };
++
++
+ }
+\ No newline at end of file
+diff --git a/app/src/main/java/com/example/evie/music_assistant/RecordActivity/java.java b/app/src/main/java/com/example/evie/music_assistant/RecordActivity/java.java
+new file mode 100644
+index 0000000..47a92a4
+--- /dev/null
++++ b/app/src/main/java/com/example/evie/music_assistant/RecordActivity/java.java
+@@ -0,0 +1,8 @@
++package com.example.evie.music_assistant.RecordActivity;
++
++/**
++ * Created by evie on 4/25/17.
++ */
++
++public class java {
++}
+diff --git a/app/src/main/res/drawable/DynoMuseIcon.png b/app/src/main/res/drawable/DynoMuseIcon.png
+new file mode 100644
+index 0000000..da1c25f
+Binary files /dev/null and b/app/src/main/res/drawable/DynoMuseIcon.png differ
+diff --git a/app/src/main/res/drawable/DynoMuseLogo.png b/app/src/main/res/drawable/DynoMuseLogo.png
+new file mode 100644
+index 0000000..48aae2b
+Binary files /dev/null and b/app/src/main/res/drawable/DynoMuseLogo.png differ
+diff --git a/app/src/main/res/drawable/add.png b/app/src/main/res/drawable/add.png
+new file mode 100755
+index 0000000..741828d
+Binary files /dev/null and b/app/src/main/res/drawable/add.png differ
+diff --git a/app/src/main/res/drawable/dynomuse.png b/app/src/main/res/drawable/dynomuse.png
+new file mode 100644
+index 0000000..c34c112
+Binary files /dev/null and b/app/src/main/res/drawable/dynomuse.png differ
+diff --git a/app/src/main/res/drawable/minus.png b/app/src/main/res/drawable/minus.png
+new file mode 100755
+index 0000000..25c92cc
+Binary files /dev/null and b/app/src/main/res/drawable/minus.png differ
+diff --git a/app/src/main/res/drawable/stop.png b/app/src/main/res/drawable/stop.png
+new file mode 100644
+index 0000000..c6ffeff
+Binary files /dev/null and b/app/src/main/res/drawable/stop.png differ
+diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
+index 6d890f8..03c41f7 100644
+--- a/app/src/main/res/layout/activity_main.xml
++++ b/app/src/main/res/layout/activity_main.xml
+@@ -16,27 +16,10 @@
+     <Button
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:drawableLeft="@drawable/metro"
+-        android:gravity="left|center_vertical"
+-        android:text="    Metronome"
+-        android:textSize="50dp"
+-        android:textColor="@color/text"
+-        android:id="@+id/imageButton6"
+-        android:background="@drawable/abc_btn_borderless_material"
+-        android:backgroundTint="@color/bright_foreground_inverse_material_light"
+-        android:layout_marginTop="41dp"
+-        android:onClick="goToMetronome"
+-        android:layout_alignParentTop="true"
+-        android:layout_centerHorizontal="true"
+-        />
+-
+-    <Button
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+         android:drawableLeft="@drawable/tuner"
+         android:gravity="left|center_vertical"
+         android:text="    TUNER"
+-        android:textSize="50dp"
++        android:textSize="40dp"
+         android:textColor="@color/text"
+         android:id="@+id/imageButton9"
+         android:background="@drawable/abc_btn_borderless_material"
+@@ -51,7 +34,7 @@
+         android:drawableLeft="@drawable/record"
+         android:gravity="left|center_vertical"
+         android:text="    RECORD"
+-        android:textSize="50dp"
++        android:textSize="40dp"
+         android:textColor="@color/text"
+         android:id="@+id/imageButton10"
+         android:background="@drawable/abc_btn_borderless_material"
+@@ -63,10 +46,10 @@
+     <Button
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:drawableLeft="@drawable/practice"
++        android:drawableLeft="@drawable/dynomuse"
+         android:gravity="left|center_vertical"
+         android:text="    Practice"
+-        android:textSize="50dp"
++        android:textSize="40dp"
+ 
+         android:textColor="@color/text"
+         android:id="@+id/imageButton11"
+@@ -75,4 +58,21 @@
+         android:layout_below="@+id/imageButton10"
+         android:layout_alignStart="@+id/imageButton10" />
+ 
++    <Button
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:drawableLeft="@drawable/metro"
++        android:gravity="left|center_vertical"
++        android:text="    Metronome"
++        android:textSize="40dp"
++        android:textColor="@color/text"
++        android:id="@+id/imageButton6"
++        android:background="@drawable/abc_btn_borderless_material"
++        android:backgroundTint="@color/bright_foreground_inverse_material_light"
++        android:layout_marginTop="41dp"
++        android:onClick="goToMetronome"
++        android:layout_alignParentTop="true"
++        android:layout_alignParentStart="true"
++        android:layout_marginStart="28dp" />
++
+ </RelativeLayout>
+diff --git a/app/src/main/res/layout/metroscreen.xml b/app/src/main/res/layout/metroscreen.xml
+index 715f48a..25eb373 100644
+--- a/app/src/main/res/layout/metroscreen.xml
++++ b/app/src/main/res/layout/metroscreen.xml
+@@ -1,23 +1,29 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
++
+     xmlns:tools="http://schemas.android.com/tools"
+     android:orientation="vertical"
+     android:id="@+id/activity_main"
+     android:layout_width="match_parent"
+-    android:layout_height="match_parent"
+-    android:paddingBottom="@dimen/activity_vertical_margin"
+-    android:paddingLeft="@dimen/activity_horizontal_margin"
+-    android:paddingRight="@dimen/activity_horizontal_margin"
+-    android:paddingTop="@dimen/activity_vertical_margin"
++    android:layout_height="wrap_content"
+     android:background="@color/background"
+-    tools:context="com.example.evie.music_assistant.MetronomeActivity">
++    android:fillViewport="true"
++    android:resizeable="true"
++    android:smallScreens="true"
++    android:normalScreens="true"
++    android:largeScreens="true"
+ 
++    android:anyDensity="true"
++    tools:context="com.example.evie.music_assistant.MetronomeActivity"
++    android:weightSum="1">
+ 
+-<LinearLayout
+-        android:id="@+id/linearLayout1"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content" >
++
++    <LinearLayout
++            android:id="@+id/linearLayout1"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="20dp">
+ 
+         <TextView
+             android:id="@+id/bps"
+@@ -26,155 +32,118 @@
+             android:layout_weight="1"
+             android:text="@string/bps"
+             android:textAppearance="?android:attr/textAppearanceLarge"
+-            android:textColor="@color/yellow"
+-            android:textSize="30sp"
++            android:textColor="#9DDCDC"
++            android:textSize="60sp"
+             android:gravity="center_vertical|center_horizontal" />
+ 
+         <TextView
+-            android:id="@+id/timesignature"
+-            android:layout_width="0px"
+-            android:layout_height="90dp"
+-            android:layout_weight="1"
+-            android:gravity="center_vertical|center_horizontal"
+-            android:text="@string/bps"
+-            android:textAppearance="?android:attr/textAppearanceLarge"
+-            android:textColor="@color/yellow"
+-            android:textSize="30sp" />
++                android:id="@+id/timesignature"
++                android:layout_width="0px"
++                android:layout_height="90dp"
++                android:layout_weight="1"
++                android:gravity="center_vertical|center_horizontal"
++                android:text="@string/bps"
++                android:textAppearance="?android:attr/textAppearanceLarge"
++                android:textColor="#9DDCDC"
++                android:textSize="60sp" />
+ 
+         <TextView
+-            android:id="@+id/currentBeat"
+-            android:layout_width="wrap_content"
+-            android:layout_height="match_parent"
+-            android:layout_weight="1.00"
+-            android:gravity="center_vertical|center_horizontal"
+-            android:text="@string/one"
+-            android:textAppearance="?android:attr/textAppearanceLarge"
+-            android:textColor="@color/yellow"
+-            android:textSize="30sp" />
++                android:id="@+id/currentBeat"
++                android:layout_width="wrap_content"
++                android:layout_height="match_parent"
++                android:layout_weight="1.00"
++                android:gravity="center_vertical|center_horizontal"
++                android:text="@string/one"
++                android:textAppearance="?android:attr/textAppearanceLarge"
++                android:textColor="@color/red"
++                android:textSize="60sp" />
+ 
+     </LinearLayout>
+ 
+-    <Space
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:layout_margin="2sp" />
+ 
+     <LinearLayout
+-        android:id="@+id/linearLayout2"
++        android:id="@+id/linearLayout4"
+         android:layout_width="match_parent"
+-        android:layout_height="wrap_content" >
+-
+-        <TextView
+-            android:id="@+id/textView1"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:text="@string/bps"
+-            android:textAppearance="?android:attr/textAppearanceMedium" />
++        android:layout_height="218dp"
++        android:gravity="center|bottom"
++        android:layout_marginTop="466dp"
++        android:layout_below="@+id/linearLayout1"
++        android:layout_alignParentStart="true">
+ 
+         <Button
+             android:id="@+id/minus"
+-            android:layout_width="0px"
++            android:background="@drawable/minus"
+             android:layout_height="wrap_content"
+-            android:layout_weight="1"
+             android:onClick="onMinusClick"
+-            android:text="@string/minus"
+-            android:textSize="30sp" />
++            android:layout_width="wrap_content"
++            android:layout_gravity="center_vertical"
++            android:layout_marginRight="40dp"/>
++
++        <Button
++            android:id="@+id/startstop"
++            android:onClick="onStartStopClick"
++            android:background="@drawable/play"
++            android:adjustViewBounds="true"
++            android:cropToPadding="false"
++            android:scaleType="fitXY"
++            android:textSize="80dp"
++            android:layout_height="212dp"
++            android:layout_width="200dp" />
+ 
+         <Button
+             android:id="@+id/plus"
+-            android:layout_width="0px"
++            android:layout_width="wrap_content"
++            android:background="@drawable/add"
+             android:layout_height="wrap_content"
+-            android:layout_weight="1"
+             android:onClick="onPlusClick"
+-            android:text="@string/plus"
+-            android:textSize="30sp" />
++            android:layout_gravity="center_vertical"
++            android:layout_marginLeft="40dp"/>
+ 
+     </LinearLayout>
+-    <Space
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:layout_margin="10sp" />
++
++    <SeekBar
++        android:id="@+id/volumebar"
++        android:layout_weight="0.52"
++        android:padding="10dp"
++        android:layout_height="80dp"
++        android:layout_marginTop="92dp"
++        android:layout_width="500dp"
++        android:layout_below="@+id/linearLayout1"
++        android:layout_centerHorizontal="true" />
+ 
+     <LinearLayout
+         android:id="@+id/linearLayout3"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content" >
+-
+-        <TextView
+-            android:id="@+id/textView2"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:text="@string/timesignature"
+-            android:textAppearance="?android:attr/textAppearanceMedium" />
++        android:layout_width="300dp"
++        android:layout_marginTop="42dp"
++        android:layout_height="200dp"
++        android:layout_below="@+id/volumebar"
++        android:layout_centerHorizontal="true">
+ 
+         <Spinner
+             android:id="@+id/beatspinner"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:layout_weight="1" />
++            android:textSize="80sp"
++            android:layout_weight="1"
++            android:gravity="center"
++            android:layout_marginLeft="20dp"/>
+ 
+         <TextView
+-            android:id="@+id/textView4"
+             android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:text="@string/dash"
+-            android:textAppearance="?android:attr/textAppearanceLarge" />
++            android:layout_height="match_parent"
++            android:text="/"
++            android:textSize="95sp"
++            android:textColor="#E67A7A"
++            android:gravity="center_vertical"/>
+ 
+         <Spinner
+             android:id="@+id/notespinner"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:layout_weight="1" />
+-
+-    </LinearLayout>
+-
+-    <Space
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:layout_margin="10sp" />
+-
+-
+-    <LinearLayout
+-        android:id="@+id/linearLayout4"
+-        android:layout_width="match_parent"
+-        android:gravity="center_horizontal"
+-        android:layout_height="wrap_content" >
+-
+-        <Button
+-            android:id="@+id/startstop"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:onClick="onStartStopClick"
+-            android:background="@drawable/play"
+-            android:textSize="80dp" />
+-
+-    </LinearLayout>
+-
+-    <Space
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:layout_margin="10sp" />
+-
+-    <LinearLayout
+-        android:id="@+id/linearLayout5"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content" >
+-
+-        <TextView
+-            android:id="@+id/textView3"
+-            android:layout_width="wrap_content"
+-            android:layout_height="match_parent"
+-            android:text="@string/volume"
+-            android:textAppearance="?android:attr/textAppearanceMedium" />
+-
+-        <SeekBar
+-            android:id="@+id/volumebar"
+-            android:layout_width="0dip"
+-            android:layout_height="wrap_content"
+             android:layout_weight="1"
+-            android:padding="10dp" />
++            android:gravity="center"/>
+ 
+     </LinearLayout>
+ 
+ 
+-</LinearLayout>
+\ No newline at end of file
++</RelativeLayout>
+\ No newline at end of file
+diff --git a/app/src/main/res/layout/recordscreen.xml b/app/src/main/res/layout/recordscreen.xml
+index 3509b84..dbe6dcc 100644
+--- a/app/src/main/res/layout/recordscreen.xml
++++ b/app/src/main/res/layout/recordscreen.xml
+@@ -1,6 +1,114 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:orientation="vertical" android:layout_width="match_parent"
+-    android:layout_height="match_parent">
++<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:baselineAligned="false"
++    android:orientation="vertical">
+ 
+-</LinearLayout>
+\ No newline at end of file
++
++    <LinearLayout
++        android:id="@+id/container"
++        android:layout_width="wrap_content"
++        android:layout_height="160dp"
++        android:weightSum="1"
++        android:layout_marginTop="43dp"
++        android:layout_above="@+id/imageButton2"
++        android:layout_centerHorizontal="true">
++
++        <ImageButton
++            android:layout_width="wrap_content"
++            android:layout_height="match_parent"
++            android:src="@drawable/lists"
++            android:id="@+id/imageButton4"
++            android:adjustViewBounds="true"
++            android:cropToPadding="false"
++            android:scaleType="fitCenter"
++            android:onClick="goToRecordList"
++            android:background="@drawable/abc_btn_borderless_material"
++            android:layout_alignBottom="@+id/container"
++            android:layout_toStartOf="@+id/imageButton2" />
++
++        <View
++            android:layout_width="160dp"
++            android:layout_height="match_parent"
++            android:layout_weight="1" />
++
++        <ImageButton
++            android:layout_width="wrap_content"
++            android:layout_height="match_parent"
++            android:src="@drawable/stop"
++            android:id="@+id/imageButton5"
++            android:adjustViewBounds="true"
++            android:cropToPadding="false"
++            android:scaleType="fitCenter"
++            android:background="@drawable/abc_btn_borderless_material"
++            android:layout_above="@+id/imageButton2"
++            android:layout_toEndOf="@+id/imageButton2" />
++
++    </LinearLayout>
++
++    <ImageButton
++        android:layout_width="200dp"
++        android:layout_height="200dp"
++        android:src="@drawable/record"
++        android:id="@+id/imageButton2"
++        android:adjustViewBounds="true"
++        android:scaleType="fitCenter"
++        android:onClick="startRecording"
++        android:background="@drawable/abc_btn_borderless_material"
++        android:layout_marginBottom="66dp"
++        android:layout_alignParentBottom="true"
++        android:layout_centerHorizontal="true" />
++
++    <LinearLayout
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++
++        android:layout_alignParentTop="true"
++        android:layout_centerHorizontal="true"
++        android:layout_marginTop="42dp">
++
++        <ImageView
++            android:layout_height="200dp"
++            android:src="@drawable/microphone"
++            android:adjustViewBounds="true"
++            android:layout_gravity="center"
++            android:scaleType="fitXY"
++            android:layout_width="190dp" />
++
++        <View
++            android:layout_width="match_parent"
++            android:layout_height="40dp" />
++
++        <TextView
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:text="00:00"
++            android:textSize="70dp"
++            android:textColor="#E67A7A"
++            android:gravity="center_horizontal"
++            android:id="@+id/timerTextView" />
++        <EditText
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:textSize="30dp"
++            android:gravity="center_horizontal"
++            android:ems="10"
++            android:id="@+id/editText2"
++            android:hint="Name your work"
++            android:textColorHint="#DBE2EF"
++            android:textColor="#9DDCDC"
++            android:layout_centerVertical="true"
++            android:layout_alignStart="@+id/imageButton2"
++            android:inputType="text"
++            android:visibility = "gone"/>
++
++    </LinearLayout>
++
++
++
++
++</RelativeLayout>
+\ No newline at end of file
+diff --git a/app/src/main/res/layout/spinner_layout.xml b/app/src/main/res/layout/spinner_layout.xml
+index 21c4d3f..42854cb 100644
+--- a/app/src/main/res/layout/spinner_layout.xml
++++ b/app/src/main/res/layout/spinner_layout.xml
+@@ -3,6 +3,6 @@
+     android:id="@+id/spinnerTarget"
+     android:layout_width="fill_parent"
+     android:layout_height="wrap_content"
+-    android:textSize="25pt"
+-    android:textColor="#FF8B1500"
++    android:textSize="30pt"
++    android:textColor="@color/text"
+     android:gravity="center"/>
+\ No newline at end of file
+diff --git a/app/src/main/res/layout/tunerscreen.xml b/app/src/main/res/layout/tunerscreen.xml
+index d3c3d89..01160e8 100644
+--- a/app/src/main/res/layout/tunerscreen.xml
++++ b/app/src/main/res/layout/tunerscreen.xml
+@@ -7,19 +7,24 @@
+         android:id="@+id/choose"
+         android:layout_width="match_parent"
+         android:layout_height="200dp"
+-        android:gravity="left|center_vertical"
++        android:gravity="center_horizontal|center_vertical"
+         android:text="Choose a note:"
+-        android:textSize="50dp"
++        android:textSize="40dp"
+         android:textColor="@color/text"/>
++
+     <Spinner
+         android:id="@+id/notes_spinner"
+         android:layout_gravity="center_horizontal"
+         android:layout_width="100dp"
++        android:textSize="30dp"
+         android:layout_height="100dp" />
++
+     <Button
+         android:id="@+id/playbutton"
+         android:layout_gravity="bottom|center_horizontal"
+         android:drawableTop="@drawable/play"
+         android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
++        android:layout_height="wrap_content"
++        android:layout_marginTop="50dp"
++        android:background="@drawable/abc_btn_borderless_material" />
+ </LinearLayout>
+\ No newline at end of file
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index 88eeb38..27bc023 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -1,10 +1,15 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <color name="colorPrimary">#3F51B5</color>
+-    <color name="colorPrimaryDark">#303F9F</color>
++    <color name="colorPrimary">#D3D4D8</color>
++    <color name="colorPrimaryDark">#4D606E</color>
+     <color name="colorAccent">#FF4081</color>
+     <color name="background">#F5F5F5</color>
+     <color name="text"> #4D606E</color>
++    <color name="bar"> #D3D4D8</color>
++    <color name="navigation"> #4D606E</color>
++    <color name="yellow">#FFD480</color>
++    <color name="red">#FF5722</color>
+     <color name="black">#000000</color>
+-    <color name="yellow">#DEE054</color>
++
++
+ </resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 6de3e27..edf66d7 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -1,14 +1,12 @@
+ <resources>
+-    <string name="app_name">Music_Assistant</string>
++    <string name="app_name">Dynomuse</string>
+     <string name="start">Start</string>
+     <string name="stop">Stop</string>
+-
+     <string name="plus">+</string>
+     <string name="minus">-</string>
+     <string name="bps">bps</string>
+     <string name="timesignature">time signature</string>
+     <string name="dash">/</string>
+     <string name="volume">volume</string>
+-
+     <string name="one">1</string>
+ </resources>
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+index 5885930..896d312 100644
+--- a/app/src/main/res/values/styles.xml
++++ b/app/src/main/res/values/styles.xml
+@@ -1,11 +1,33 @@
+ <resources>
+ 
+     <!-- Base application theme. -->
+-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
++    <style name="AppBaseThenme" parent="Theme.AppCompat.Light"></style>
++    <style name="AppTheme" parent="AppBaseThenme">
+         <!-- Customize your theme here. -->
+         <item name="colorPrimary">@color/colorPrimary</item>
+         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+         <item name="colorAccent">@color/colorAccent</item>
++        <item name="android:navigationBarColor">@color/navigation</item>
++        <item name="android:windowBackground">@color/background</item>
++        <item name="android:textColorPrimary">@color/text</item>
++        <item name="colorControlNormal">#EAEAEA</item>
++        <item name="colorControlActivated">#F9ED69</item>
++        <item name="colorControlHighlight">#F08A5D</item>
++        <item name="android:spinnerItemStyle"> @style/spinnerItemStyle</item>
++        <item name="android:spinnerDropDownItemStyle">@style/spinnerDropDownItemStyle</item>
++
++    </style>
++
++    <style name="spinnerItemStyle">
++        <item name="android:padding">10dip</item>
++        <item name="android:textSize">100sp</item>
++        <item name="android:textColor">@color/text</item>
++    </style>
++
++    <style name="spinnerDropDownItemStyle">
++        <item name="android:padding">5dp</item>
++        <item name="android:textSize">15sp</item>
++        <item name="android:textColor">@color/text</item>
+     </style>
+ 
+ </resources>
+diff --git a/vui/IntentSchema.json b/vui/IntentSchema.json
+index 88eab74..8074f62 100644
+--- a/vui/IntentSchema.json
++++ b/vui/IntentSchema.json
+@@ -47,7 +47,7 @@
+     },
+ 	{
+ 		"intent": "GetRecordingListIntent"
+-	}
++	},
+     {
+       "intent": "AMAZON.StartOverIntent"
+     },
+diff --git a/vui/SampleUtterances.txt b/vui/SampleUtterances.txt
+index 9b4ef15..84a4cbd 100644
+--- a/vui/SampleUtterances.txt
++++ b/vui/SampleUtterances.txt
+@@ -2,18 +2,21 @@ SelectTaskIntent start {utteredTask}
+ SelectTaskIntent I want to {utteredTask}
+ SelectTaskIntent I'd like to {utteredTask}
+ SelectTaskIntent launch {utteredTask}
++SelectTaskIntent run {utteredTask}
+ 
+ SelectNoteIntent play in the key of {utteredNote}
+ SelectNoteIntent I want to play in the key of {utteredNote}
+ SelectNoteIntent I want to play {utteredNote}
+ SelectNoteIntent Tune to the key of {utteredNote}
++SelectNoteIntent key of {utteredNote}
++SelectNoteIntent what is {utteredNote}
++SelectNoteIntent {utteredNote} key
++
+ 
+ SelectSpeedIntent play at {utteredSpeed} b p m
+ SelectSpeedIntent play at {utteredSpeed} beats per minute
+ SelectSpeedIntent {utteredSpeed} b p m
+ SelectSpeedIntent {utteredSpeed} beats per minute
+-SelectSpeedIntent faster
+-SelectSpeedIntent slower
+ 
+ SelectSigIntent play in {utteredSig} time
+ SelectSigIntent play in {utteredSig} time
+@@ -21,9 +24,10 @@ SelectSigIntent {utteredSig} time
+ SelectSigIntent {utteredSig} time
+ 
+ SelectRecIntent find {utteredRec}
+-SelectRecIntent find {utteredRec} recording
++SelectRecIntent find the file {utteredRec}
+ SelectRecIntent do you have {utteredRec}
+-SelectRecIntent listen
++SelectRecIntent listen to {utteredRec}
++SelectRecIntent open {utteredRec}
+ 
+ GetRecordingListIntent go through list
+ GetRecordingListIntent recordings
+diff --git a/vui/index.js b/vui/index.js
+index 5e4255d..7b6ea53 100644
+--- a/vui/index.js
++++ b/vui/index.js
+@@ -6,7 +6,7 @@ const doc = require('dynamodb-doc');
+ 
+ const dynamo = new doc.DynamoDB();
+ 
+-var recordings_dict = {};
++var recordings = {};
+ 
+ // Way to make it dry: get the base url and append the string associated + .mp3
+ var tuner_url_dict = {
+@@ -29,6 +29,11 @@ var tuner_url_dict = {
+     "G sharp": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/short/Gsharp4.mp3",
+ };
+ 
++// hard coding the beats for now, not worrying about "up"
++var metronome_url_dict = {
++    "default": "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/notes/metronome/100bpm4-4.mp3",
++};
++
+ // Route the incoming request based on type (LaunchRequest, IntentRequest,
+ // etc.) The JSON body of the request is provided in the event parameter.
+ exports.handler = function (event, context) {
+@@ -38,7 +43,7 @@ exports.handler = function (event, context) {
+          * Uncomment this if statement and populate with your skill's application ID to
+          * prevent someone else from configuring a skill that sends requests to this function.
+          */
+-		if (event.session.application.applicationId !== " amzn1.ask.skill.84e7e330-f816-4192-a826-6bf4c87279a0") {
++		if (event.session.application.applicationId !== "amzn1.ask.skill.84e7e330-f816-4192-a826-6bf4c87279a0") {
+             context.fail("Invalid Application ID");
+         }
+ 		
+@@ -46,8 +51,10 @@ exports.handler = function (event, context) {
+             TableName: "Recordings"
+ 		};
+ 
++
+         // adapted code from piazza post
+-        dynamo.scan(params, function(err, data) {
++        // This is where we would populate the dict with the file names and urls
++        /*dynamo.scan(params, function(err, data) {
+             if (err) {
+                 console.log("Failed to get data", err);
+             }
+@@ -56,13 +63,17 @@ exports.handler = function (event, context) {
+                 const name = item['RecordingName'].toLowerCase();
+                 recordings_dict[name] = item;
+             }
+-        });
++        });*/
++        recordings["piano"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/piano.mp3";
++        recordings["sax"] =  "https://s3-us-west-1.amazonaws.com/cs160.music.tuning.notes/recordings/sax.mp3";
+ 
+         if (event.session.new) {
+             onSessionStarted({requestId: event.request.requestId}, event.session);
+         }
+ 
+-        if (event.request.type === "LaunchRequest") {
++        if (event.request.type === "AudioPlayer.PlaybackNearlyFinished" && sessionAttributes.isMetronome && event.session.attributes.metronomeUrl) {
++            repeatMetronomeDirective(event.session.attributes.metronomeUrl, "sample-token");
++        } else if (event.request.type === "LaunchRequest") {
+             onLaunch(event.request,
+                 event.session,
+                 function callback(sessionAttributes, speechletResponse) {
+@@ -122,21 +133,18 @@ function onIntent(intentRequest, session, callback) {
+     var intent = intentRequest.intent,
+         intentName = intentRequest.intent.name;
+ 
++
+     if ("AMAZON.HelpIntent" === intentName) {
+         handleGetHelpRequest(intent, session, callback);
+-    }
+-
+-    else if (session.attributes && session.attributes.isTuning) {
++    } else if ("SelectTaskIntent" === intentName) {
++        handleMainMenuRequest(intent, session, callback)
++    } else if (session.attributes && session.attributes.isTuning) {
+         handleTuningDialogRequest(intent, session, callback);
+-    } else if (session.attributes && session.attributes.isRecording) {
+-        handleRecordingRequest(intent, session, callback);
+ 	} else if (session.attributes && session.attributes.isRecordingList) {
+-        handleRecordingListRequest(intent, session, callback);	
++        handleRecordingListRequest(intent, session, callback);
+ 	} else if (session.attributes && session.attributes.isMetronome) {
+         handleMetronomeRequest(intent, session, callback);
+-    } else if ("SelectTaskIntent" === intentName) {
+-		handleMainMenuRequest(intent, session, callback)
+-	} else if ("AMAZON.StopIntent" === intentName) { // quit if at main menu (implied from not being in any current dialog)
++    } else if ("AMAZON.StopIntent" === intentName) { // quit if at main menu (implied from not being in any current dialog)
+         handleFinishSessionRequest(intent, session, callback);
+     } else {
+         throw "Invalid intent";
+@@ -156,11 +164,11 @@ function onSessionEnded(sessionEndedRequest, session) {
+ 
+ // ------- Skill specific business logic -------
+ 
+-var CARD_TITLE = "Music Assistant";
++var CARD_TITLE = "Dyno Muse";
+ 
+ function getWelcomeResponse(callback) {
+     var sessionAttributes = {},
+-        speechOutput = "Music Assistant, what recipe would you like to make?",
++        speechOutput = "Welcome to Dyno Muse, what you would you like to do?",
+         shouldEndSession = false,
+         repromptText = "What else can I help you with?";
+ 
+@@ -189,31 +197,36 @@ function handleBlankRequest(callback) { //Could have specific hints for blank re
+ function handleMainMenuRequest(intent, session, callback) {
+     // Parses initial task request to go into metronome, tuner, or recording task
+ 	/* Should we have separate intents for the three tasks? Make it analagous here with 3 cases //make Matthew explain
+-    if ("SelectKnownDessertRecipeIntent" === intent.name) {
+-        var item = intent.slots.DessertRecipe.value;
+-    } else {
+-        var item = intent.slots.FoodRecipe.value;
+-    }
+-	*/
+-	
++    */
++
++	var speechOutput = ""
++
+ 	if ("SelectTaskIntent" === intent.name) {
+ 		//3 tasks possible
+ 		var task = intent.slots.utteredTask.value;
+ 		if (task === "tuner") {
++		    speechOutput += "Okay, let's check out the tuner.";
+ 			session.attributes.isTuning = true;
+-			session.attributes.isRecording = false;
++			session.attributes.isRecordingList = false;
+ 			session.attributes.isMetronome = false;
+ 			handleTuningDialogRequest(intent, session, callback);
+ 		} else if (task === "metronome") {
++		    speechOutput += "Great! I'll take you to the metronome.";
+ 			session.attributes.isTuning = false;
+-			session.attributes.isRecording = false;
++			session.attributes.isRecordingList = false;
+ 			session.attributes.isMetronome = true;
+ 			handleMetronomeRequest(intent, session, callback);
+ 		} else if (task === "record" || task === "recording") {
++		    speechOutput += "Alright, I'll tell you what recordings you currently have.";
+ 			session.attributes.isTuning = false;
+-			session.attributes.isRecording = true;
++			session.attributes.isRecordingList = true;
+ 			session.attributes.isMetronome = false;
+-			handleRecordingRequest(intent, session, callback);
++			handleRecordingListRequest(intent, session, callback);
++		} else {
++		    var reprompt = session.attributes.repromptText,
++            speechOutput = "I'm sorry, I couldn't understand you. You can start the metronome, tuner, or look at your recordings." + reprompt;
++        callback(session.attributes,
++            buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+ 		}
+ 	}
+ 	else {
+@@ -240,10 +253,10 @@ function handleMainMenuRequest(intent, session, callback) {
+ 
+         session.attributes.index = -1;
+         // will be used to signify that the user is going through the ingredients list
+-		
+-		
++
++
+         //session.attributes.isIngredientsList = false;
+-        
++
+ 		var reprompt = session.attributes.repromptText,
+             speechOutput = "I found the recording called "
+                 + item + " . "
+@@ -256,7 +269,7 @@ function handleMainMenuRequest(intent, session, callback) {
+         callback(session.attributes,
+             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+     }
+-	
++
+ 	*/
+ }
+ 
+@@ -266,138 +279,47 @@ function handleTuningDialogRequest(intent, session, callback) {
+ 	// - Back out into the main menu
+ 	// - Start with standard guitar tuning EADGBE -- actually nixing this would be easier
+ 	// - Manually choose each note they would like to tune to
+-	
++
+ 	var speechOutput = ""
+ 
+     if ("AMAZON.StopIntent" === intent.name) {
+         // Back out into the main menu
+         speechOutput += session.attributes.speechOutput;
+-        
+-		
++
++
+ 		delete session.attributes.isMetronome;
+ 		delete session.attributes.isTuning;
+ 		delete session.attributes.isRecording;
+-		delete session.attributes.utteredTask;
+-		delete session.attributes.utteredNote;
+-		delete session.attributes.utteredSpeed;
+-		delete session.attributes.utteredRec;
+-		
+-	
++
+     } else if ("SelectNoteIntent" === intent.name) {
+         // Jump right into that particular note
+-		var note = session.attributes.utteredNote.value;
+-        url = tuner_url_dict[note];
+-        str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
++		var note = intent.slots.utteredNote.value;
++        var url = tuner_url_dict[note];
++        var str = "<speak> Okay, here's  " + note + ". You will hear it twice. <break time='2s'/>"
+                 + "<audio src=\"" + url + "\"> <break time='1s'/> <audio src=\"" + url + "\"> </speak>";
+-        outputSpeech: {
+-            "type": "SSML",
+-            "ssml": str
++        speechOutput = {
++            type: "SSML",
++            ssml: str
+         }
+ 			//add notes into speechOutput with SSML
+-			
++
++    } else if ("SelectTaskIntent" === intent.name) {
++        speechOutput += "Welcome to the tuner! What note would you like to hear?"
+     } else { //might not necessarily have to be reprompt
+         var reprompt = session.attributes.repromptText,
+             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
+         callback(session.attributes,
+             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+ 	}
+-	
++
+ 
+     callback(session.attributes,
+         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+ }
+-		/*// Check if user has just stated they wanted to go through ingredients
+-        if ("GetIngredientsIntent" === intent.name && !session.attributes.isIngredientsList) {
+-            speechOutput += "I'll go through the ingredients list. "
+-                + "Please say next to go through the list or say 'what can I do?' for further assistance. "
+-            session.attributes.isIngredientsList = true;
+-        } else {
+-            // Progress through the list based on response
+-            var sample = -1;
+-            if ("GetIngredientsIntent" === intent.name) { // if they say get ingredients intent, treat like "next" intent
+-                sample = getIndex("AMAZON.NextIntent", session.attributes.index, session.attributes.ingredients.length);
+-            } else {
+-                sample = getIndex(intent.name, session.attributes.index, session.attributes.ingredients.length);
+-            }
+-            if (sample < session.attributes.ingredients.length) {
+-                //  Adds the ingredient to the output here
+-                speechOutput += session.attributes.ingredients[sample];
+-                session.attributes.index = sample;
+-            } else {
+-                // if we are at the end, we tell the user we are moving on
+-                speechOutput += "Now, I'll read off steps from the recipe. "
+-                    + "Please say next to go through the list or say 'what can I do?' for further assistance. ";
+-                delete session.attributes.isRecipeDialog;
+-                delete session.attributes.isIngredientsList;
+-                delete session.attributes.ingredients;
+-                session.attributes.index = -1;
+-                session.attributes.isRecipeDirectionsDialog = true;
+-                session.attributes.isRecipeList = true;
+-            }
+-        }
+-		*/
+-		
+-		//^^^ Helpful for going through a list, not really applicable here
+-		
+-		
+-
+-function handleRecordingRequest(intent, session, callback) {
+-    // Handles all intents in the Recording Dialog
+-    // User can: 
+-    // - Back out to main menu
+-    // - Look for a specific recording title
+-	// - Go through the list of recordings one by one, calls handleRecordingListRequest
+-    //   * If the user goes forward at the end, let them know there is no more recordings.
+-    //   * If the user goes backwards at the beginning, just repeat the first recording's title.
+-	// - Play a recording once found
+-	
+-	var speechOutput = ""
+-	
+-	if ("AMAZON.StopIntent" === intent.name) {
+-        // Back out into the main menu
+-        speechOutput += session.attributes.speechOutput;
+-        delete session.attributes.isMetronome;
+-		delete session.attributes.isTuning;
+-		delete session.attributes.isRecording;
+-		delete	sessions.attributes.isRecordingList;
+-		delete sessions.attributes.index;
+-		delete session.attributes.utteredTask;
+-		delete session.attributes.utteredNote;
+-		delete session.attributes.utteredSpeed;
+-		delete session.attributes.utteredRec;
+-    } else if ("GetRecordingListIntent" === intent.name) {
+-		sessions.attributes.isRecordingList = true;
+-	} else if ("SelectRecIntent" === intent.name && session.attributes.utteredRec) {
+-		//try to find selected song in table of recordings pulled from earlier
+-		var recording = session.attributes.utteredRec.value;
+-		
+-		var audio = recordings[recording.toLowerCase()];
+-		
+-		if audio {
+-			//play that audio!
+-		}
+-		else {
+-			var reprompt = session.attributes.repromptText;
+-            speechOutput = "I do not believe I have a recording called " + recording + ". " + reprompt;
+-			callback(session.attributes,
+-				buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+-		}
+-	}
+-	//add to speech output ^^^
+-	callback(session.attributes,
+-				buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
+-	}
+ 
+-/*		
+-function handleRecordingListeningRequest(intent, session, callback) {
+-	//Handles the actual playing of a particular recording
+-	
+-}		
+-*/
+-	
+ function handleRecordingListRequest(intent, session, callback) {
+     // Handles walking through the list of recordings
+-    // User can: 
++    // User can:
+ 	// - Go through the list of recordings one by one, calls handleRecordingListRequest
+     //   * If the user goes forward at the end, let them know there is no more recordings.
+     //   * If the user goes backwards at the beginning, just repeat the first recording's title.
+@@ -411,40 +333,44 @@ function handleRecordingListRequest(intent, session, callback) {
+         delete session.attributes.isMetronome;
+ 		delete session.attributes.isTuning;
+ 		delete session.attributes.isRecording;
+-		delete session.attributes.utteredTask;
+-		delete session.attributes.utteredNote;
+-		delete session.attributes.utteredSpeed;
+-		delete session.attributes.utteredRec;
+-		delete session.attributes.index;
+ 	} else {
+-        if ("GetRecordingListIntent" === intent.name && !session.attributes.isRecordingList) {
+-            speechOutput += "I'll go through your recordings, for each file you can decide if you want to listen to it or go to the next file."
++        if ("SelectTaskIntent" === intent.name && (intent.slots.utteredTask.value === "record" || intent.slots.utteredTask.value === "recording")) {
++            speechOutput += "I can tell you what recordings I have found or you can ask for a particular recording right now.";
+             session.attributes.isRecordingList = true;
+         } else {
+-            // Progress through the list based on response
+-            var sample = -1;
+-            if ("GetRecordingListIntent" === intent.name) { // if they say get recording intent, treat like "next" intent
+-                sample = getIndex("AMAZON.NextIntent", session.attributes.index, session.attributes.recordings.length);
++            if ("GetRecordingListIntent" === intent.name) { // say the recordings that are stored.
++                var numRec = recordings.length;
++                if (numRec == 0) {
++                    speechOutput = "I did not find any recordings. Have you recorded some recently?";
++                }
++                else {
++                     if (numRec == 1) {
++                        plural = "s";
++                    } else {
++                        plural = "";
++                    }
++                    // Hacky way of parsing through recordings and feeding into a string
++                    var listOfRecordings = "";
++                    for (var key in recordings) {
++                        listOfRecordings += key;
++                        listOfRecordings += ", ";
++                    }
++                    listOfRecordings = listOfRecordings.substring(0, listOfRecordings.length - 2);
++                    speechOutput = "I found " + numRec + " recording" + plural + ". They are: " + listOfRecordings + ".";
++                }
+             } else if ("SelectRecIntent" === intent.name) {
+-				if (session.attributes.utteredRec) {
++                var rec = intent.slots.utteredRec.value;
++                var recording = recordings[rec.toLowerCase()];
++				if (recording) {
+ 					//play the recording they said to
+-				}
+-				else {
+-					//play the recording we are at right now in the list
+-					var recording = recordings[] 
+-				}
+-			} else {
+-                sample = getIndex(intent.name, session.attributes.index, session.attributes.recordings.length); 
+-            }
+-            var index = session.attributes.index; //will have to add this as an attribute everywhere
+-            if (sample < session.attributes.recordings.length) {
+-                speechOutput += session.attributes.directions[sample];
+-                session.attributes.index = sample;
+-            } else {
+-                speechOutput += "You have no more recording files "
+-                    + "You can go back to the beginning of the list by saying 'start over'. "
+-                    + "If you are done, you may quit. ";
+-            }      
++                    speechOutput = {
++                        type: "SSML",
++                        ssml: "<speak><audio src=\"" + recording + "\"></speak>"
++                    };
++				} else {
++                    speechOutput = "I could not find the recording titled " + rec.toLowerCase() + ".";
++                }
++			}
+         }
+     }
+ 
+@@ -452,8 +378,54 @@ function handleRecordingListRequest(intent, session, callback) {
+         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+ }
+ 
+-//TO DO MetronomeHandler
+-function handleMetronomeRequest(intent, session, callback) {}
++function handleMetronomeRequest(intent, session, callback) {
++    /* Handles Metronome Task
++     * User can:
++     * - start metronome
++     * - stop metronome
++     * - change the tempo
++     * - change the time signature
++    */
++   var speechOutput = "";
++
++   if ("AMAZON.StopIntent" === intent.name) {
++        // Back out into the main menu
++        speechOutput += session.attributes.speechOutput;
++        delete session.attributes.isMetronome;
++        delete session.attributes.isTuning;
++        delete session.attributes.isRecording;
++        delete session.attributes.metronomeUrl;
++    } else if ("SelectTaskIntent" === intent.name) {
++        speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature."
++        callback(session.attributes,
++            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
++    } else if ("SelectSpeedIntent" === intent.name) {
++        var speed = intent.slots.utteredSpeed.value;
++        // for now the speed doesn't matter
++        speechOutput = "Tempo is set to " + speed + "BPM.";
++        callback(session.attributes,
++            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
++    } else if ("SelectSigIntent" === intent.name) {
++        var sig = intent.slots.utteredSig.value;
++        // for now time signature does not matter
++        speechOutput = "Time signature is now " + sig + ".";
++        callback(session.attributes,
++            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
++    } else if ("AMAZON.PauseIntent" === intent.name) {
++        speechOutput = "Stopping the metronome.";
++        callback(session.attributes,
++            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "stop", null, null, null, null));
++    } else if ("AMAZON.ResumeIntent" === intent.name) {
++        // also do something
++        speechOutput = "Beginning the metronome.";
++        url = metronome_url_dict["default"];
++        session.attributes.metronomeUrl = url;
++        callback(session.attributes,
++            buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", url, "pizza", 0));
++    } else {
++        speechOutput = "I do not support that action.";
++    }
++}
+ 
+ function handleGetHelpRequest(intent, session, callback) {
+     // Provide a help prompt for the user, explaining possible responses.
+@@ -462,27 +434,27 @@ function handleGetHelpRequest(intent, session, callback) {
+         repromptText = "",
+         shouldEndSession = false;
+     if (session.attributes.isTuning) {
+-        speechOutput = "When tuning, you can have me play any note so you can hear it and adjust your instrument as needed."
++        speechOutput = "When tuning, you can have me play any note so you can hear it and adjust your instrument as needed. "
+             + "To do this, you can say 'Tune to the key of G,' for example. "
+-			+ "I will play the note for you twice, and you can either listen to the same note, choose a new one, or quit tuning"
++			+ "I will play the note for you twice, and you can either listen to the same note, choose a new one, or quit tuning."
+            // + "You can say next or previous to have me read off the next or previous note in standard tuning. "
+             // + "I can also start over from the stop if needed when you say 'start again'. "
+     } else if (session.attributes.isMetronome) {
+         speechOutput = "With the metronome, I can keep time in any tempo from 50 to 200 beats per minute. "
+-            + "You can say 'play at 100 bpm', for example, to change the speed."
+-            + "100bpm is the default setting"
+-            + "You may also choose the time signature by saying 'play in 4 4 time' which is the default time signature"
+-            + "You may also choose to have no time signature so all notes sound the same."
+-			+ "You may stop the metronome with 'stop' and resume or change your settings at any time";
+-    } else if (session.attributes.isRecording) {
+-        speechOutput = "Here, we can listen to your previous recordings "
+-            + "You can say 'Find Blue Song' to find your recording titled 'Blue Song'"
+-            + "If I have your recording, I will play it for you"
+-            + "If your unsure of the recording title, I will ask you if you want to go through the list of your recordings."
+-			+ "For each recording in your saved recordings, I will tell you the name and you will have the option to 'listen' to it or go to the 'next' or 'previous' recording"
++            + "You can say 'play at 100 bpm', for example, to change the speed. "
++            + "100bpm is the default setting. "
++            + "You may also choose the time signature by saying 'play in 4 4 time' which is the default time signature. "
++            + "You may also choose to have no time signature so all notes sound the same. "
++			+ "You may stop the metronome with 'stop' and resume or change your settings at any time.";
++    } else if (session.attributes.isRecordingList) {
++        speechOutput = "Here, we can listen to your previous recordings. "
++            + "You can say 'Find Blue Song' to find your recording titled 'Blue Song'. "
++            + "If I have your recording, I will play it for you. "
++            + "If your unsure of the recording title, I will ask you if you want to go through the list of your recordings. "
++			+ "For each recording in your saved recordings, I will tell you the name and you will have the option to 'listen' to it or go to the 'next' or 'previous' recording. "
+ 			+ "You may 'pause', 'play', 'restart', or 'stop' your recording at any time.";
+     }else {
+-        speechOutput = "You can tune your instrument, use a metronome to practice, or listen to your recordings" //If user just says help in the main menu?
++        speechOutput = "You can tune your instrument, use a metronome to practice, or listen to your recordings. " //If user just says help in the main menu?
+             + "For example you can say, 'I'd like to tune in the key of G.'";
+         }
+     callback(session.attributes,
+@@ -495,8 +467,65 @@ function handleFinishSessionRequest(intent, session, callback) {
+         buildSpeechletResponseWithoutCard("Have a good day!", "", true));
+ }
+ 
+-// ------- Helper functions to build responses -------
++// ------- Helper functions to build responses and directives -------
++
++function buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds) {
++    var audioPlayerDirective;
++    if (directiveType === 'play') {
++        audioPlayerDirective = {
++            "type": "AudioPlayer.Play",
++            "playBehavior": behavior,
++            "audioItem": {
++                "stream": {
++                    "url": url,
++                    "token": token,
++                    "offsetInMilliseconds": offsetInMilliseconds
++                }
++            }
++        };
++    } else if (directiveType === 'stop') {
++        audioPlayerDirective = {
++            "type": "AudioPlayer.Stop"
++        };
++    } else {
++        audioPlayerDirective = {
++            "type": "AudioPlayer.Stop",
++            "clearBehavior": behavior
++        };
++    }
+ 
++    responseObject.response.directives = [audioPlayerDirective];
++    return audioPlayerDirective;
++}
++
++// "Loop" by repeating what is in the current queue. To be called when the stream is almost done.
++function repeatMetronomeDirective(url, token) {
++    return {
++        directives: [buildAudioPlayerDirective("play", "ENQUEUE", url, token, 0)],
++    };
++}
++
++function buildSpeechletWithDirectives(title, output, repromptText, shouldEndSession, directiveType, behavior, url, token, offsetInMilliseconds) {
++    return {
++        outputSpeech: {
++            type: "PlainText",
++            text: output
++        },
++        card: {
++            type: "Simple",
++            title: title,
++            content: output
++        },
++        reprompt: {
++            outputSpeech: {
++                type: "PlainText",
++                text: repromptText
++            }
++        },
++        directives: [buildAudioPlayerDirective(directiveType, behavior, url, token, offsetInMilliseconds)],
++        shouldEndSession: shouldEndSession
++    };
++}
+ 
+ function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
+     return {
+@@ -541,24 +570,4 @@ function buildResponse(sessionAttributes, speechletResponse) {
+         sessionAttributes: sessionAttributes,
+         response: speechletResponse
+     };
+-}
+-
+-// ------- Additional Helper Functions --------
+-function getIndex(intentName, index, maxLength) {
+-    // Helper function to get an index
+-    // Index can go forward 1, backwards 1, to the end (maxLength - 1), or the beginning (0)
+-
+-    // Note, I think that Next / Prev Intents would be matched if they said "Next ingredient", NLP is beautiful
+-    // But if not, it's not hard to just add the intent.
+-    var i = index;
+-    if ("AMAZON.StartOverIntent" === intentName) {
+-        i = 0;
+-    } else if ("AMAZON.NextIntent" === intentName) {
+-        i = index + 1;
+-    } else if ("AMAZON.PreviousIntent" === intentName) {
+-        i = Math.max(0, index - 1);
+-    } else if ("LastItemIntent" === intentName) {
+-        i = maxLength - 1;
+-    }
+-    return i
+-}
++}
+\ No newline at end of file

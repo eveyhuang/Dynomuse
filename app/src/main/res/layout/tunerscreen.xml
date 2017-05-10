@@ -9,8 +9,9 @@
         android:layout_height="200dp"
         android:gravity="center|center_vertical"
         android:text="Choose a note:"
-        android:textSize="50dp"
+        android:textSize="40dp"
         android:textColor="@color/text"/>
+
     <Spinner
         android:id="@+id/notes_spinner"
         android:layout_gravity="center_horizontal"
@@ -21,8 +22,9 @@
         android:layout_below="@+id/notes_spinner"
         android:layout_gravity="center"
         android:drawableTop="@drawable/play"
-        android:background="@drawable/abc_btn_borderless_material"
         android:onClick="playNote"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:background="@drawable/abc_btn_borderless_material" />
 </LinearLayout>

@@ -214,28 +214,27 @@ function handleMainMenuRequest(intent, session, callback) {
 
 	var speechOutput = ""
 
-    //default attributes
-    session.attributes.speed = "100"
-    session.attributes.note = "A"
-    session.attributes.sig = "4 4"
+    //default attributes, initialize if have not been before
+    if (session.attributes.speed == null || session.attributes.note == null || session.attributes.sig == null) {
+        session.attributes.speed = "100";
+        session.attributes.note = "a";
+        session.attributes.sig = "four four";
+    }
 
 	if ("SelectTaskIntent" === intent.name) {
 		//3 tasks possible
 		var task = intent.slots.utteredTask.value;
 		if (task === "tuner") {
-		    speechOutput += "Okay, let's check out the tuner.";
 			session.attributes.isTuning = true;
 			session.attributes.isRecordingList = false;
 			session.attributes.isMetronome = false;
 			handleTuningDialogRequest(intent, session, callback);
 		} else if (task === "metronome") {
-		    speechOutput += "Great! I'll take you to the metronome.";
 			session.attributes.isTuning = false;
 			session.attributes.isRecordingList = false;
 			session.attributes.isMetronome = true;
 			handleMetronomeRequest(intent, session, callback);
 		} else if (task === "record" || task === "recording") {
-		    speechOutput += "Alright, I'll tell you what recordings you currently have.";
 			session.attributes.isTuning = false;
 			session.attributes.isRecordingList = true;
 			session.attributes.isMetronome = false;
@@ -289,9 +288,9 @@ function handleTuningDialogRequest(intent, session, callback) {
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("GetNoteIntent" === intent.name) {
         var note = sessionAttributes.note;
-        speechOutput += "The current note is " + note + ". Let me know what note you would like to play."
+        speechOutput += "The current note is " + note + ". Let me know what note you would like to play if this is incorrect."
         callback(session.attributes,
-                    buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else {
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
@@ -391,19 +390,26 @@ function handleMetronomeRequest(intent, session, callback) {
 
         getWelcomeResponse(callback)
     } else if ("SelectTaskIntent" === intent.name) {
-        speechOutput += "Welcome to the metronome! The current speed is 100bpm with a 4 4 time signature. To begin, say 'resume'.";
+        speechOutput += "Welcome to the metronome! The current speed is " + session.attributes.speed
+                        + " BPM with a " + session.attributes.sig + " time signature. To begin, say 'play'.";
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSpeedIntent" === intent.name) {
         var speed = intent.slots.utteredSpeed.value;
-        // for now the speed doesn't matter
-        speechOutput = "Tempo is set to " + speed + "BPM.";
-        session.attributes.speed = speed
+        // pretend speed matters
+        if (speed > 200) {
+            speechOutput = "Tempo cannot be higher than 200 BPM unfortunately.";           
+        } else if (speed < 50) {
+            speechOutput = "Tempo cannot be lower than 50 BPM unfortunately.";
+        } else {
+            speechOutput = "Tempo is set to " + speed + "BPM.";
+            session.attributes.speed = speed
+        }
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSigIntent" === intent.name) {
         var sig = intent.slots.utteredSig.value;
-        // for now time signature does not matter
+        // time signature is forced to be correct so there's no need for checking
         speechOutput = "Time signature is now " + sig + ".";
         session.attributes.sig = sig;
         callback(session.attributes,

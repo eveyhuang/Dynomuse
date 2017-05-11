@@ -214,6 +214,11 @@ function handleMainMenuRequest(intent, session, callback) {
 
 	var speechOutput = ""
 
+    //default attributes
+    session.attributes.speed = "100"
+    session.attributes.note = "A"
+    session.attributes.sig = "4 4"
+
 	if ("SelectTaskIntent" === intent.name) {
 		//3 tasks possible
 		var task = intent.slots.utteredTask.value;
@@ -249,43 +254,6 @@ function handleMainMenuRequest(intent, session, callback) {
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 	}
 
-	/* HELPFUL JSON PARSING + LOGIC FOR RECORD
-    var recording = recordings_dict[item.toLowerCase()]; //recording
-
-    if (recording) {
-        JSON.stringify(recording);
-        //session.attributes.isRecipeDialog = true; //equiv would be a flag for which task we're in? do we want 3 boolean flags or one text flag ("none", "metronome", "record", "tuner")
-        session.attributes.isRecording = true;
-		session.attributes.recording = item;
-
-        //session.attributes.ingredients = recipe["Ingredients"].split("\n"); //still have to split recordings
-        //session.attributes.directions = recipe["Directions"].split("\n");
-
-        //console.log("Ingredients", session.attributes.ingredients);
-        //console.log("Directions", session.attributes.directions);
-
-        session.attributes.index = -1;
-        // will be used to signify that the user is going through the ingredients list
-
-
-        //session.attributes.isIngredientsList = false;
-
-		var reprompt = session.attributes.repromptText,
-            speechOutput = "I found the recording called "
-                + item + " . "
-                + "Would you like to listen to it now? ";
-        callback(session.attributes,
-            buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
-    } else {
-        var reprompt = session.attributes.repromptText,
-            speechOutput = "I do not believe I have your recording called " + item + ". " + reprompt;
-        callback(session.attributes,
-            buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
-    }
-
-	*/
-}
-
 function handleTuningDialogRequest(intent, session, callback) {
     //Handles Tuning Dialog
 	//User can:
@@ -319,7 +287,12 @@ function handleTuningDialogRequest(intent, session, callback) {
         speechOutput += "Welcome to the tuner! What note would you like to hear?"
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
-    } else { //might not necessarily have to be reprompt
+    } else if ("GetNoteIntent" === intent.name) {
+        var note = sessionAttributes.note;
+        speechOutput += "The current note is " + note + ". Let me know what note you would like to play."
+        callback(session.attributes,
+                    buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+    } else {
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
         callback(session.attributes,
@@ -425,14 +398,26 @@ function handleMetronomeRequest(intent, session, callback) {
         var speed = intent.slots.utteredSpeed.value;
         // for now the speed doesn't matter
         speechOutput = "Tempo is set to " + speed + "BPM.";
+        session.attributes.speed = speed
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSigIntent" === intent.name) {
         var sig = intent.slots.utteredSig.value;
         // for now time signature does not matter
         speechOutput = "Time signature is now " + sig + ".";
+        session.attributes.sig = sig;
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+    } else if ("GetSpeedIntent" === intent.name) {
+              var speed = sessionAttributes.speed;
+              speechOutput += "The current speed is " + speed + "beats per minute. You can change the speed, or resume the metronome."
+              callback(session.attributes,
+                          buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+    }else if ("GetSigIntent" === intent.name) {
+             var sig = sessionAttributes.sig;
+             speechOutput += "The current time signature is " + sig + ". You may change the time signature, or resume the metronome."
+             callback(session.attributes,
+                         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("AMAZON.PauseIntent" === intent.name) {
         speechOutput = "Stopping the metronome. What else do you want to do?";
         callback(session.attributes,

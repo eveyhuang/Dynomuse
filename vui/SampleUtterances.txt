@@ -1,8 +1,8 @@
-SelectTaskIntent start (/the) {utteredTask}
+SelectTaskIntent start {utteredTask}
 SelectTaskIntent I want to {utteredTask}
 SelectTaskIntent I'd like to {utteredTask}
 SelectTaskIntent launch {utteredTask}
-SelectTaskIntent run (/the) {utteredTask}
+SelectTaskIntent run {utteredTask}
 SelectTaskIntent open the {utteredTask}
 
 SelectNoteIntent play in the key of {utteredNote}
@@ -12,8 +12,8 @@ SelectNoteIntent Tune to the key of {utteredNote}
 SelectNoteIntent key of {utteredNote}
 SelectNoteIntent {utteredNote} key
 
-SelectSpeedIntent play at {utteredSpeed} (/beats per minute/b p m)
-SelectSpeedIntent {utteredSpeed} (/beats per minute/b p m)
+SelectSpeedIntent play at {utteredSpeed} beats per minute
+SelectSpeedIntent {utteredSpeed} beats per minute
 SelectSpeedIntent tempo of {utteredSpeed}
 
 SelectSigIntent play in {utteredSig} time
@@ -27,13 +27,15 @@ SelectRecIntent open {utteredRec}
 
 GetSpeedIntent what is the speed
 GetSpeedIntent how fast
-GetSpeedIntent how many (/beats per minute/b p m)
+GetSpeedIntent how many beats per minute
 
-GetSigIntent what time signature (/is it)
-GetSigIntent what is the current time (/signature)
+GetSigIntent what time signature
+GetSigIntent what is the current time
 
-GetNoteIntent what is the current (note/key)
-GetNoteIntent what (/note/key) is this
+GetNoteIntent what is the current note
+GetNoteIntent what is the current key
+GetNoteIntent what note is this
+GetNoteIntent what key is this
 
 GetRecordingListIntent go through list
 GetRecordingListIntent recordings

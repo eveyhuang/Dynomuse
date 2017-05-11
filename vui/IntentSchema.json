@@ -45,9 +45,18 @@
         }
       ]
     },
+    {
+      "intent": "GetSpeedIntent"
+    },
 	{
-		"intent": "GetRecordingListIntent"
+      "intent": "GetRecordingListIntent"
 	},
+    {
+      "intent": "GetNoteIntent"
+    },
+    {
+      "intent": "GetSigIntent"
+    },
     {
       "intent": "AMAZON.StartOverIntent"
     },

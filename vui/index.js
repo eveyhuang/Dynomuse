@@ -212,10 +212,9 @@ function handleMainMenuRequest(intent, session, callback) {
 	/* Should we have separate intents for the three tasks? Make it analagous here with 3 cases //make Matthew explain
     */
 
-	var speechOutput = ""
+	var speechOutput = "";
 
-    //default attributes, initialize if have not been before
-    if (session.attributes.speed == null || session.attributes.note == null || session.attributes.sig == null) {
+    if (session.attributes.speed == null) {
         session.attributes.speed = "100";
         session.attributes.note = "a";
         session.attributes.sig = "four four";
@@ -252,6 +251,7 @@ function handleMainMenuRequest(intent, session, callback) {
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, reprompt, false));
 	}
+}
 
 function handleTuningDialogRequest(intent, session, callback) {
     //Handles Tuning Dialog
@@ -271,7 +271,6 @@ function handleTuningDialogRequest(intent, session, callback) {
 		delete session.attributes.isRecording;
 
         getWelcomeResponse(callback);
-
     } else if ("SelectNoteIntent" === intent.name) {
         // Jump right into that particular note
 		var note = intent.slots.utteredNote.value;
@@ -288,10 +287,10 @@ function handleTuningDialogRequest(intent, session, callback) {
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("GetNoteIntent" === intent.name) {
         var note = sessionAttributes.note;
-        speechOutput += "The current note is " + note + ". Let me know what note you would like to play if this is incorrect."
+        speechOutput += "The current note is " + note + ". Let me know what note you would like to play."
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
-    } else {
+    } else { //might not necessarily have to be reprompt
         var reprompt = session.attributes.repromptText,
             speechOutput = "Sorry, what note would you like to tune to?" + reprompt;
         callback(session.attributes,
@@ -390,17 +389,17 @@ function handleMetronomeRequest(intent, session, callback) {
 
         getWelcomeResponse(callback)
     } else if ("SelectTaskIntent" === intent.name) {
-        speechOutput += "Welcome to the metronome! The current speed is " + session.attributes.speed
-                        + " BPM with a " + session.attributes.sig + " time signature. To begin, say 'play'.";
+        speechOutput += "Welcome to the metronome! The current speed is " + session.attributes.speed + " with a " + session.attributes.sig
+                        + " time signature. To begin, say 'play'.";
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSpeedIntent" === intent.name) {
         var speed = intent.slots.utteredSpeed.value;
-        // pretend speed matters
-        if (speed > 200) {
-            speechOutput = "Tempo cannot be higher than 200 BPM unfortunately.";           
-        } else if (speed < 50) {
-            speechOutput = "Tempo cannot be lower than 50 BPM unfortunately.";
+        // for now the speed doesn't matter
+        if (parseInt(speed) > 200) {
+            speechOutput = "The tempo cannot be greater than 200 BPM.";
+        } else if (parseInt(speed) < 50) {
+            speechOutput = "The tempo cannot be less than 50 BPM.";
         } else {
             speechOutput = "Tempo is set to " + speed + "BPM.";
             session.attributes.speed = speed
@@ -409,28 +408,28 @@ function handleMetronomeRequest(intent, session, callback) {
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("SelectSigIntent" === intent.name) {
         var sig = intent.slots.utteredSig.value;
-        // time signature is forced to be correct so there's no need for checking
-        speechOutput = "Time signature is now " + sig + ".";
+        // for now time signature does not matter
         session.attributes.sig = sig;
+        speechOutput = "Time signature is now " + sig + ".";
         callback(session.attributes,
             buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("GetSpeedIntent" === intent.name) {
-              var speed = sessionAttributes.speed;
-              speechOutput += "The current speed is " + speed + "beats per minute. You can change the speed, or resume the metronome."
-              callback(session.attributes,
-                          buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
-    }else if ("GetSigIntent" === intent.name) {
-             var sig = sessionAttributes.sig;
-             speechOutput += "The current time signature is " + sig + ". You may change the time signature, or resume the metronome."
-             callback(session.attributes,
-                         buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+        var speed = sessionAttributes.speed;
+        speechOutput += "The current speed is " + speed + "beats per minute. You can change the speed, or resume the metronome."
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
+    } else if ("GetSigIntent" === intent.name) {
+        var sig = sessionAttributes.sig;
+        speechOutput += "The current time signature is " + sig + ". You may change the time signature, or resume the metronome."
+        callback(session.attributes,
+            buildSpeechletResponse(CARD_TITLE, speechOutput, speechOutput, false));
     } else if ("AMAZON.PauseIntent" === intent.name) {
         speechOutput = "Stopping the metronome. What else do you want to do?";
         callback(session.attributes,
             buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, false, "stop", null, null, null, null, null));
     } else if ("AMAZON.ResumeIntent" === intent.name) {
         // also do something
-        speechOutput = "Beginning the metronome.";
+        speechOutput = "Starting the metronome.";
         session.attributes.metronomeUrl = metronome_url_dict["default"];
         callback(session.attributes,        
             buildSpeechletWithDirectives(CARD_TITLE, speechOutput, speechOutput, true, "play", "REPLACE_ALL", session.attributes.metronomeUrl, metronome_token, null, 0));
